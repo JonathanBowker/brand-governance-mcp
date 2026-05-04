@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     mcp_transport: str = "http"
 
     log_level: str = "INFO"
-    presign_expiry: int = 3600
+    presign_expiry: int = 604800
     public_base_url: str = "https://advancedanalytica.co.uk"
     upgrade_url: str = "https://advancedanalytica.co.uk/brand-governance"
     support_email: str = "jonathan@advancedanalytica.co.uk"

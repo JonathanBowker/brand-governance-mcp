@@ -77,7 +77,7 @@ services:
         value: INFO
       - key: AA_PRESIGN_EXPIRY
         scope: RUN_TIME
-        value: "3600"
+        value: "604800"
       - key: AA_KEYS_BUCKET
         scope: RUN_TIME
         value: aa-keys

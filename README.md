@@ -11,7 +11,7 @@ This repository contains a Python FastMCP server that exposes brand governance c
 - Gates Layer 2 YAML sidecars and Layer 3 JSON tokens behind access flags.
 - Surfaces standards, toolkits, asset-library, digital, and other indexed collections through MCP.
 - Lists standards, content, rules, images, and trial status.
-- Returns signed app-domain image URLs with one-hour expiry by default.
+- Returns signed app-domain image URLs with seven-day expiry by default.
 - Supports optional image manifests with structured metadata for governed asset selection.
 - Provides a Layer 1 `brand_answer_question` tool using indexed metadata and Markdown excerpts across permitted collections.
 - Runs locally or on DigitalOcean App Platform.
@@ -122,7 +122,7 @@ AA_MCP_PORT=8000
 AA_MCP_PATH=/mcp/brand-governance
 AA_MCP_TRANSPORT=http
 AA_LOG_LEVEL=INFO
-AA_PRESIGN_EXPIRY=3600
+AA_PRESIGN_EXPIRY=604800
 ```
 
 ## Key lookup model
