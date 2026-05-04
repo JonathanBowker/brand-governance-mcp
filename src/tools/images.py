@@ -52,6 +52,7 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
         if PurePosixPath(name).suffix.lower() not in IMAGE_EXTENSIONS:
             continue
         item = manifest_by_name.get(name, {})
+        image_url = build_asset_url(client.bucket_uri, key, settings.presign_expiry)
         images.append(
             {
                 "filename": name,
@@ -59,8 +60,8 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
                 "usage": item.get("usage", "reference"),
                 "path": key,
                 "watermark": client.watermark,
-                "presignedUrl": build_asset_url(client.bucket_uri, key, settings.presign_expiry),
-                "imageUrl": build_asset_url(client.bucket_uri, key, settings.presign_expiry),
+                "imageUrl": image_url,
+                "presignedUrl": image_url,
                 "expiresInSeconds": settings.presign_expiry,
             }
         )
@@ -79,7 +80,7 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
 def register(mcp: FastMCP):
     @mcp.tool(
         name="brand_get_image_list",
-        description="Return available images for a standard as short-lived presigned URLs.",
+        description="Return available images for a standard as short-lived app-domain URLs.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_get_image_list(

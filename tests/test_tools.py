@@ -50,6 +50,9 @@ async def test_brand_get_image_list(s3_env):
     assert response["count"] == 1
     assert response["images"][0]["filename"] == "logo.png"
     assert "presignedUrl" in response["images"][0]
+    assert "imageUrl" in response["images"][0]
+    assert response["images"][0]["imageUrl"].startswith("https://advancedanalytica.co.uk/")
+    assert response["images"][0]["presignedUrl"] == response["images"][0]["imageUrl"]
 
 
 async def test_brand_answer_question(s3_env):
@@ -80,3 +83,4 @@ async def test_brand_get_image_list_toolkit(s3_env):
     response = await run_brand_get_image_list(TOOLKIT_KEY, "toolkits/social-media")
     assert response["count"] == 1
     assert response["images"][0]["filename"] == "social.png"
+    assert response["images"][0]["imageUrl"].startswith("https://advancedanalytica.co.uk/")
