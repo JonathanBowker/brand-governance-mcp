@@ -8,7 +8,7 @@ from starlette.responses import JSONResponse, Response
 from src.config import settings
 from src.s3 import S3ObjectNotFound, get_object_bytes
 from src.tools import TOOL_MODULES
-from src.utils.asset_urls import asset_route_path, resolve_asset_token, verify_asset_signature
+from src.utils.asset_urls import asset_route_path, resolve_asset_path_token, resolve_asset_token, verify_asset_signature
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,22 @@ def create_mcp() -> FastMCP:
 
             if not verify_asset_signature(bucket_uri, path, expires, sig):
                 return JSONResponse({"ok": False, "error": "Invalid or expired asset signature."}, status_code=403)
+
+        try:
+            body, content_type = await get_object_bytes(bucket_uri, path)
+        except S3ObjectNotFound:
+            return JSONResponse({"ok": False, "error": "Asset not found."}, status_code=404)
+
+        media_type = content_type or mimetypes.guess_type(path)[0] or "application/octet-stream"
+        return Response(body, media_type=media_type)
+
+    @mcp.custom_route(f"{asset_route_path()}/{{token}}/{{filename:path}}", methods=["GET"], include_in_schema=False)
+    async def asset_path_proxy(request: Request) -> Response:
+        token = request.path_params.get("token", "")
+        resolved = resolve_asset_path_token(token)
+        if not resolved:
+            return JSONResponse({"ok": False, "error": "Invalid or expired asset signature."}, status_code=403)
+        bucket_uri, path, _expires = resolved
 
         try:
             body, content_type = await get_object_bytes(bucket_uri, path)

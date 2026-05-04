@@ -3,7 +3,8 @@ import hmac
 import json
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
-from urllib.parse import urlencode
+from pathlib import PurePosixPath
+from urllib.parse import quote
 
 from src.config import settings
 
@@ -44,10 +45,11 @@ def _decode_payload(token: str) -> str | None:
 def build_asset_url(bucket_uri: str, path: str, expiry_seconds: int) -> str:
     expires_at = (datetime.now(UTC) + timedelta(seconds=expiry_seconds)).isoformat()
     payload = _compact_payload(bucket_uri, path, expires_at)
-    token = _encode_payload(payload)
+    asset = _encode_payload(payload)
     sig = _sign_compact_payload(payload)
-    query = urlencode({"asset": token, "sig": sig})
-    return f"{settings.public_base_url.rstrip('/')}{asset_route_path()}?{query}"
+    token = f"{asset}.{sig}"
+    filename = quote(PurePosixPath(path).name or "asset", safe="")
+    return f"{settings.public_base_url.rstrip('/')}{asset_route_path()}/{token}/{filename}"
 
 
 def verify_asset_signature(bucket_uri: str, path: str, expires: str, sig: str) -> bool:
@@ -92,3 +94,10 @@ def resolve_asset_token(asset: str, sig: str) -> tuple[str, str, str] | None:
     if expires_at <= datetime.now(UTC):
         return None
     return bucket_uri, path, expires
+
+
+def resolve_asset_path_token(token: str) -> tuple[str, str, str] | None:
+    asset, separator, sig = token.rpartition(".")
+    if not separator:
+        return None
+    return resolve_asset_token(asset, sig)

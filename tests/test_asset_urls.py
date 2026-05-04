@@ -1,20 +1,20 @@
 from datetime import UTC, datetime, timedelta
 
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 
-from src.utils.asset_urls import build_asset_url, resolve_asset_token, verify_asset_signature
+from src.utils.asset_urls import build_asset_url, resolve_asset_path_token, verify_asset_signature
 
 
 def test_asset_url_round_trip():
     bucket = "https://brand-store.lon1.digitaloceanspaces.com/brand-pwc/"
     path = "brand-pwc/advanced-user/standards/logo/images/logo.png"
     url = build_asset_url(bucket, path, 3600)
-    assert "/brand-governance-asset?" in url
-    query = parse_qs(urlparse(url).query)
-    assert "asset" in query
-    assert "sig" in query
-    assert "bucket" not in query
-    resolved = resolve_asset_token(query["asset"][0], query["sig"][0])
+    parsed = urlparse(url)
+    assert "/brand-governance-asset/" in parsed.path
+    assert parsed.query == ""
+    assert parsed.path.endswith("/logo.png")
+    token = parsed.path.split("/brand-governance-asset/", 1)[1].split("/", 1)[0]
+    resolved = resolve_asset_path_token(token)
     assert resolved is not None
     assert resolved[0] == bucket
     assert resolved[1] == path
