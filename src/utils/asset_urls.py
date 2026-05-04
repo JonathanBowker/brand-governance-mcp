@@ -1,4 +1,6 @@
+import base64
 import hmac
+import json
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from urllib.parse import urlencode
@@ -19,10 +21,32 @@ def _sign(bucket_uri: str, path: str, expires: str) -> str:
     return hmac.new(_secret().encode("utf-8"), payload, sha256).hexdigest()
 
 
+def _compact_payload(bucket_uri: str, path: str, expires: str) -> str:
+    return json.dumps({"b": bucket_uri, "p": path, "e": expires}, separators=(",", ":"))
+
+
+def _sign_compact_payload(payload: str) -> str:
+    return hmac.new(_secret().encode("utf-8"), payload.encode("utf-8"), sha256).hexdigest()
+
+
+def _encode_payload(payload: str) -> str:
+    return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("utf-8").rstrip("=")
+
+
+def _decode_payload(token: str) -> str | None:
+    padding = "=" * (-len(token) % 4)
+    try:
+        return base64.urlsafe_b64decode(f"{token}{padding}".encode("utf-8")).decode("utf-8")
+    except Exception:
+        return None
+
+
 def build_asset_url(bucket_uri: str, path: str, expiry_seconds: int) -> str:
     expires_at = (datetime.now(UTC) + timedelta(seconds=expiry_seconds)).isoformat()
-    sig = _sign(bucket_uri, path, expires_at)
-    query = urlencode({"bucket": bucket_uri, "path": path, "expires": expires_at, "sig": sig})
+    payload = _compact_payload(bucket_uri, path, expires_at)
+    token = _encode_payload(payload)
+    sig = _sign_compact_payload(payload)
+    query = urlencode({"asset": token, "sig": sig})
     return f"{settings.public_base_url.rstrip('/')}{asset_route_path()}?{query}"
 
 
@@ -39,3 +63,32 @@ def verify_asset_signature(bucket_uri: str, path: str, expires: str, sig: str) -
         return False
     expected = _sign(bucket_uri, path, expires)
     return hmac.compare_digest(expected, sig)
+
+
+def resolve_asset_token(asset: str, sig: str) -> tuple[str, str, str] | None:
+    if not _secret() or not asset or not sig:
+        return None
+    payload = _decode_payload(asset)
+    if not payload:
+        return None
+    expected = _sign_compact_payload(payload)
+    if not hmac.compare_digest(expected, sig):
+        return None
+    try:
+        decoded = json.loads(payload)
+    except json.JSONDecodeError:
+        return None
+    bucket_uri = decoded.get("b", "")
+    path = decoded.get("p", "")
+    expires = decoded.get("e", "")
+    if not bucket_uri or not path or not expires:
+        return None
+    try:
+        expires_at = datetime.fromisoformat(expires)
+    except ValueError:
+        return None
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=UTC)
+    if expires_at <= datetime.now(UTC):
+        return None
+    return bucket_uri, path, expires

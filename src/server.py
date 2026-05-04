@@ -8,7 +8,7 @@ from starlette.responses import JSONResponse, Response
 from src.config import settings
 from src.s3 import S3ObjectNotFound, get_object_bytes
 from src.tools import TOOL_MODULES
-from src.utils.asset_urls import asset_route_path, verify_asset_signature
+from src.utils.asset_urls import asset_route_path, resolve_asset_token, verify_asset_signature
 
 logger = logging.getLogger(__name__)
 
@@ -29,16 +29,24 @@ def create_mcp() -> FastMCP:
 
     @mcp.custom_route(asset_route_path(), methods=["GET"], include_in_schema=False)
     async def asset_proxy(request: Request) -> Response:
-        bucket_uri = request.query_params.get("bucket", "")
-        path = request.query_params.get("path", "")
-        expires = request.query_params.get("expires", "")
+        asset = request.query_params.get("asset", "")
         sig = request.query_params.get("sig", "")
 
-        if not bucket_uri or not path or not expires or not sig:
-            return JSONResponse({"ok": False, "error": "Missing asset parameters."}, status_code=400)
+        if asset:
+            resolved = resolve_asset_token(asset, sig)
+            if not resolved:
+                return JSONResponse({"ok": False, "error": "Invalid or expired asset signature."}, status_code=403)
+            bucket_uri, path, _expires = resolved
+        else:
+            bucket_uri = request.query_params.get("bucket", "")
+            path = request.query_params.get("path", "")
+            expires = request.query_params.get("expires", "")
 
-        if not verify_asset_signature(bucket_uri, path, expires, sig):
-            return JSONResponse({"ok": False, "error": "Invalid or expired asset signature."}, status_code=403)
+            if not bucket_uri or not path or not expires or not sig:
+                return JSONResponse({"ok": False, "error": "Missing asset parameters."}, status_code=400)
+
+            if not verify_asset_signature(bucket_uri, path, expires, sig):
+                return JSONResponse({"ok": False, "error": "Invalid or expired asset signature."}, status_code=403)
 
         try:
             body, content_type = await get_object_bytes(bucket_uri, path)
