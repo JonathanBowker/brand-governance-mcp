@@ -52,6 +52,12 @@ async def test_brand_get_image_list(s3_env):
     assert "imageUrl" in response["images"][0]
     assert response["images"][0]["imageUrl"].startswith("https://advancedanalytica.co.uk/")
     assert "presignedUrl" not in response["images"][0]
+    assert response["images"][0]["assetType"] == "logo_variant"
+    assert response["images"][0]["variant"] == "full_lockup"
+    assert response["images"][0]["colourway"] == "colour_positive"
+    assert response["images"][0]["approvedBackgrounds"] == ["white", "light_gradient", "light_photography"]
+    assert response["images"][0]["minSize"]["digitalPx"] == 48
+    assert response["images"][0]["clearspaceRule"] == "Height of the lowercase c in the wordmark."
 
 
 async def test_brand_answer_question(s3_env):

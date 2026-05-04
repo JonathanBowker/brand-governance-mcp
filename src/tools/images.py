@@ -7,6 +7,7 @@ from fastmcp.dependencies import CurrentHeaders
 from src.auth import resolve_api_key, validate_key
 from src.config import settings
 from src.errors import NotFoundError, tool_error_boundary
+from src.models.assets import ImageAssetMetadata, ImageManifest
 from src.policy.entitlements import require_collection_access
 from src.s3 import S3ObjectNotFound, get_object, list_objects, object_exists
 from src.tools.common import find_entry, load_index
@@ -15,15 +16,22 @@ from src.utils.asset_urls import build_asset_url
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 
 
-async def _load_manifest(bucket_uri: str, images_path: str) -> list[dict]:
+async def _load_manifest(bucket_uri: str, images_path: str) -> list[ImageAssetMetadata]:
     manifest_key = f"{images_path.rstrip('/')}/manifest.json"
     if not await object_exists(bucket_uri, manifest_key):
         return []
     try:
         raw = await get_object(bucket_uri, manifest_key)
         data = json.loads(raw)
-        return data if isinstance(data, list) else data.get("images", [])
-    except (json.JSONDecodeError, S3ObjectNotFound):
+        if isinstance(data, list):
+            return [ImageAssetMetadata.model_validate(item) for item in data]
+        if isinstance(data, dict):
+            if "assets" in data:
+                return ImageManifest.model_validate(data).assets
+            if "images" in data:
+                return [ImageAssetMetadata.model_validate(item) for item in data["images"]]
+        return []
+    except (json.JSONDecodeError, S3ObjectNotFound, ValueError):
         return []
 
 
@@ -42,7 +50,7 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
     images_path = standard.files.images.path.rstrip("/")
     keys = await list_objects(client.bucket_uri, images_path)
     manifest = await _load_manifest(client.bucket_uri, images_path)
-    manifest_by_name = {item.get("filename"): item for item in manifest if item.get("filename")}
+    manifest_by_name = {item.filename: item for item in manifest if item.filename}
 
     images = []
     for key in keys:
@@ -51,17 +59,29 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
             continue
         if PurePosixPath(name).suffix.lower() not in IMAGE_EXTENSIONS:
             continue
-        item = manifest_by_name.get(name, {})
+        item = manifest_by_name.get(name)
         image_url = build_asset_url(client.bucket_uri, key, settings.presign_expiry)
         images.append(
             {
                 "filename": name,
-                "description": item.get("description", ""),
-                "usage": item.get("usage", "reference"),
+                "title": item.title if item else None,
+                "description": item.description if item else "",
+                "usage": item.usage if item else "reference",
                 "path": key,
                 "watermark": client.watermark,
                 "imageUrl": image_url,
                 "expiresInSeconds": settings.presign_expiry,
+                "assetType": item.asset_type if item else None,
+                "variant": item.variant if item else None,
+                "colourway": item.colourway if item else None,
+                "approvedBackgrounds": item.approved_backgrounds if item else [],
+                "approvedUseCases": item.approved_use_cases if item else [],
+                "restrictions": item.restrictions if item else [],
+                "minSize": item.min_size.model_dump(by_alias=True) if item and item.min_size else None,
+                "clearspaceRule": item.clearspace_rule if item else None,
+                "tags": item.tags if item else [],
+                "priority": item.priority if item else None,
+                "role": item.role if item else None,
             }
         )
 

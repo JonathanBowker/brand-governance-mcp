@@ -1,7 +1,40 @@
-[
-  {
-    "filename": "logo-clear-space.png",
-    "description": "Clear space diagram using the lowercase c measurement.",
-    "usage": "educational_reference"
-  }
-]
+{
+  "version": "1.0",
+  "standardId": "logo",
+  "assets": [
+    {
+      "filename": "logo-clear-space.png",
+      "title": "Colour positive logo",
+      "description": "Primary full-colour positive logo for white, light gradients, and light photography.",
+      "usage": "primary_logo",
+      "assetType": "logo_variant",
+      "variant": "full_lockup",
+      "colourway": "colour_positive",
+      "approvedBackgrounds": [
+        "white",
+        "light_gradient",
+        "light_photography"
+      ],
+      "approvedUseCases": [
+        "brand_identity",
+        "corporate_communications"
+      ],
+      "restrictions": [
+        "Preferred default logo.",
+        "Do not use on dark backgrounds."
+      ],
+      "minSize": {
+        "digitalPx": 48,
+        "printInches": 0.375
+      },
+      "clearspaceRule": "Height of the lowercase c in the wordmark.",
+      "tags": [
+        "logo",
+        "primary",
+        "positive"
+      ],
+      "priority": 1,
+      "role": "approved_variant"
+    }
+  ]
+}

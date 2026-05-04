@@ -147,7 +147,34 @@ def s3_env(monkeypatch):
         s3.put_object(Bucket=BRAND_BUCKET, Key="standards/logo/page.yaml", Body=b"standard_id: logo")
         s3.put_object(Bucket=BRAND_BUCKET, Key="standards/logo/page.json", Body=b"{\"standardId\": \"logo\"}")
         s3.put_object(Bucket=BRAND_BUCKET, Key="standards/logo/images/logo.png", Body=b"fake")
-        s3.put_object(Bucket=BRAND_BUCKET, Key="standards/logo/images/manifest.json", Body=json.dumps([{"filename": "logo.png", "description": "Logo example"}]).encode("utf-8"))
+        s3.put_object(
+            Bucket=BRAND_BUCKET,
+            Key="standards/logo/images/manifest.json",
+            Body=json.dumps(
+                {
+                    "version": "1.0",
+                    "standardId": "logo",
+                    "assets": [
+                        {
+                            "filename": "logo.png",
+                            "title": "Primary logo example",
+                            "description": "Logo example",
+                            "usage": "primary_logo",
+                            "assetType": "logo_variant",
+                            "variant": "full_lockup",
+                            "colourway": "colour_positive",
+                            "approvedBackgrounds": ["white", "light_gradient", "light_photography"],
+                            "approvedUseCases": ["brand_identity", "corporate_communications"],
+                            "minSize": {"digitalPx": 48, "printInches": 0.375},
+                            "clearspaceRule": "Height of the lowercase c in the wordmark.",
+                            "tags": ["logo", "primary", "positive"],
+                            "priority": 1,
+                            "role": "approved_variant",
+                        }
+                    ],
+                }
+            ).encode("utf-8"),
+        )
         s3.put_object(Bucket=BRAND_BUCKET, Key="standards/colour/page.md", Body=b"# Colour\nLead with orange.")
         s3.put_object(Bucket=BRAND_BUCKET, Key="toolkits/social-media/page.md", Body=b"# Social Media Toolkit\nUse approved branded templates.")
         s3.put_object(Bucket=BRAND_BUCKET, Key="toolkits/social-media/page.yaml", Body=b"toolkit_id: social-media")

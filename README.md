@@ -11,7 +11,8 @@ This repository contains a Python FastMCP server that exposes brand governance c
 - Gates Layer 2 YAML sidecars and Layer 3 JSON tokens behind access flags.
 - Surfaces standards, toolkits, asset-library, digital, and other indexed collections through MCP.
 - Lists standards, content, rules, images, and trial status.
-- Generates presigned image URLs with one-hour expiry by default.
+- Returns signed app-domain image URLs with one-hour expiry by default.
+- Supports optional image manifests with structured metadata for governed asset selection.
 - Provides a Layer 1 `brand_answer_question` tool using indexed metadata and Markdown excerpts across permitted collections.
 - Runs locally or on DigitalOcean App Platform.
 
@@ -28,6 +29,8 @@ standards/logo/
     manifest.json
 ```
 
+Image manifests are optional. When present, `brand_get_image_list` reads `images/manifest.json` and returns richer metadata for each asset.
+
 Layer behavior:
 
 | File | Layer | Purpose |
@@ -36,6 +39,41 @@ Layer behavior:
 | `page.yaml` | 2 | Brando governance sidecar, precedence, validation and AI controls |
 | `page.json` | 3 | Compiled design-system tokens and API-ready objects |
 | `images/` | 1+ | Reference assets and screenshots |
+
+### Image manifest schema
+
+For governed image selection, `images/manifest.json` can define structured metadata for each asset:
+
+```json
+{
+  "version": "1.0",
+  "standardId": "logo",
+  "assets": [
+    {
+      "filename": "logo-positive.png",
+      "title": "Colour positive logo",
+      "description": "Primary full-colour logo for white and light backgrounds.",
+      "usage": "primary_logo",
+      "assetType": "logo_variant",
+      "variant": "full_lockup",
+      "colourway": "colour_positive",
+      "approvedBackgrounds": ["white", "light_gradient", "light_photography"],
+      "approvedUseCases": ["brand_identity", "corporate_communications"],
+      "restrictions": ["Do not use on dark backgrounds."],
+      "minSize": {
+        "digitalPx": 48,
+        "printInches": 0.375
+      },
+      "clearspaceRule": "Height of the lowercase c in the wordmark.",
+      "tags": ["logo", "primary", "positive"],
+      "priority": 1,
+      "role": "approved_variant"
+    }
+  ]
+}
+```
+
+Without a manifest, the MCP can still return filenames, paths, and image URLs, but it will not be able to make governed choices about variants, backgrounds, or use cases.
 
 The BGML index can contain both:
 
@@ -52,7 +90,7 @@ The BGML index can contain both:
 | `brand_list_content` | 1/2/3 | List indexed content across standards, toolkits, asset-library, digital, and other collections |
 | `brand_get_content` | 1/2/3 | Fetch Markdown, YAML, or JSON for one indexed content entry, gated by tier and capability |
 | `brand_get_rules` | 1 | Return indexed key rules for one standard |
-| `brand_get_image_list` | 1 | Return images for a standard as presigned URLs |
+| `brand_get_image_list` | 1 | Return images for a standard as signed app-domain URLs with optional metadata |
 | `brand_check_access` | 1 | Return entitlement and expiry state |
 | `brand_answer_question` | 1 | Answer from BGML metadata and Markdown excerpts across permitted collections |
 
