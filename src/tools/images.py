@@ -8,8 +8,9 @@ from src.auth import resolve_api_key, validate_key
 from src.config import settings
 from src.errors import NotFoundError, tool_error_boundary
 from src.policy.entitlements import require_collection_access
-from src.s3 import S3ObjectNotFound, get_object, get_presigned_url, list_objects, object_exists
+from src.s3 import S3ObjectNotFound, get_object, list_objects, object_exists
 from src.tools.common import find_entry, load_index
+from src.utils.asset_urls import build_asset_url
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 
@@ -58,7 +59,8 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
                 "usage": item.get("usage", "reference"),
                 "path": key,
                 "watermark": client.watermark,
-                "presignedUrl": await get_presigned_url(client.bucket_uri, key, settings.presign_expiry),
+                "presignedUrl": build_asset_url(client.bucket_uri, key, settings.presign_expiry),
+                "imageUrl": build_asset_url(client.bucket_uri, key, settings.presign_expiry),
                 "expiresInSeconds": settings.presign_expiry,
             }
         )

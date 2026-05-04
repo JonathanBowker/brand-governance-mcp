@@ -86,8 +86,25 @@ def _read_object_sync(client, bucket: str, key: str) -> str:
     return body.decode("utf-8")
 
 
+def _read_object_bytes_sync(client, bucket: str, key: str) -> tuple[bytes, str | None]:
+    b, k = _bucket_key(bucket, key)
+    try:
+        response = client.get_object(Bucket=b, Key=k)
+    except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code")
+        if code in {"NoSuchKey", "NoSuchBucket", "404"}:
+            raise S3ObjectNotFound(f"Object not found: s3://{b}/{k}") from exc
+        raise S3AccessError("Unable to read object from storage") from exc
+    body = response["Body"].read()
+    return body, response.get("ContentType")
+
+
 async def get_object(bucket: str, key: str) -> str:
     return await asyncio.to_thread(_read_object_sync, _spaces_client(), bucket, key)
+
+
+async def get_object_bytes(bucket: str, key: str) -> tuple[bytes, str | None]:
+    return await asyncio.to_thread(_read_object_bytes_sync, _spaces_client(), bucket, key)
 
 
 async def get_key_object(bucket: str, key: str) -> str:

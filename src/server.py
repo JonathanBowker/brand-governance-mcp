@@ -1,9 +1,14 @@
 import logging
+import mimetypes
 
 from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
 from src.config import settings
+from src.s3 import S3ObjectNotFound, get_object_bytes
 from src.tools import TOOL_MODULES
+from src.utils.asset_urls import asset_route_path, verify_asset_signature
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +26,27 @@ def create_mcp() -> FastMCP:
     )
     async def health() -> dict:
         return {"ok": True, "service": "brand-governance-mcp", "version": "1.0.0"}
+
+    @mcp.custom_route(asset_route_path(), methods=["GET"], include_in_schema=False)
+    async def asset_proxy(request: Request) -> Response:
+        bucket_uri = request.query_params.get("bucket", "")
+        path = request.query_params.get("path", "")
+        expires = request.query_params.get("expires", "")
+        sig = request.query_params.get("sig", "")
+
+        if not bucket_uri or not path or not expires or not sig:
+            return JSONResponse({"ok": False, "error": "Missing asset parameters."}, status_code=400)
+
+        if not verify_asset_signature(bucket_uri, path, expires, sig):
+            return JSONResponse({"ok": False, "error": "Invalid or expired asset signature."}, status_code=403)
+
+        try:
+            body, content_type = await get_object_bytes(bucket_uri, path)
+        except S3ObjectNotFound:
+            return JSONResponse({"ok": False, "error": "Asset not found."}, status_code=404)
+
+        media_type = content_type or mimetypes.guess_type(path)[0] or "application/octet-stream"
+        return Response(body, media_type=media_type)
 
     return mcp
 

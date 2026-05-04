@@ -38,8 +38,10 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
     presign_expiry: int = 3600
+    public_base_url: str = "https://advancedanalytica.co.uk"
     upgrade_url: str = "https://advancedanalytica.co.uk/brand-governance"
     support_email: str = "jonathan@advancedanalytica.co.uk"
+    asset_signing_secret: str | None = Field(default=None, validation_alias=AliasChoices("AA_ASSET_SIGNING_SECRET"))
 
 
 @lru_cache
