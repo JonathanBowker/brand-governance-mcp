@@ -1,0 +1,7 @@
+standard_id: pwc.standards.logo
+status: active
+layer: 2
+ai_controls:
+  can_summarise: true
+  can_validate_usage: true
+  can_modify_logo: false

@@ -1,0 +1,140 @@
+name: advancedanalytica-co-uk
+region: lon
+
+envs:
+  - key: LEAD_FORM_TOKEN_SECRET
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: EV[1:zJ1PuVyahptCjqGru07p9JEOpEApvGx9:8zXwpZkn778AqvgQE1cweT3yQeX3gwqdKWsEJTK/OtoHMcpWB3bwxUv5eEgS9L89lr2TdKui8ijtEPEZbXu7qtIj42vStis/GoOzvkChNUE=]
+
+static_sites:
+  - name: web
+    git:
+      repo_clone_url: https://github.com/JonathanBowker/advancedanalytica.co.uk.git
+      branch: deploy-live
+    build_command: pnpm build
+    output_dir: dist
+    envs:
+      - key: PUBLIC_GA_MEASUREMENT_ID
+        scope: BUILD_TIME
+        value: G-6QM9RN74YL
+
+functions:
+  - name: lead-api
+    git:
+      repo_clone_url: https://github.com/JonathanBowker/advancedanalytica.co.uk.git
+      branch: deploy-live
+    source_dir: functions/contact
+    envs:
+      - key: AWS_ACCESS_KEY_ID
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: EV[1:KWbQyI4CKoKPsSwlY8CvC1vc4jPjEhPB:Nj7ged5r2KQjIAwFOJpFk+jlRxizMFrZ8Q0TxQYDOsQdj/hw]
+      - key: AWS_SECRET_ACCESS_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: EV[1:JK2LE0gAp2WlZv/YXUxrKE0SHIA/T09X:uROfo7epyGxHtwA9eiBmBZH8onmE2WLWDmouVlCC6uzwqW74QfkkYQJsZyKBsvK6E4PwrGNKcTU=]
+      - key: AWS_SES_REGION
+        scope: RUN_AND_BUILD_TIME
+        value: eu-west-2
+      - key: LEAD_EMAIL_TO
+        scope: RUN_AND_BUILD_TIME
+        value: jonny.bowker@advancedanalytica.co.uk
+      - key: LEAD_EMAIL_FROM
+        scope: RUN_AND_BUILD_TIME
+        value: Advanced Analytica <jonny.bowker@advancedanalytica.co.uk>
+      - key: LEAD_FORM_TOKEN_SECRET
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: EV[1:zJ1PuVyahptCjqGru07p9JEOpEApvGx9:8zXwpZkn778AqvgQE1cweT3yQeX3gwqdKWsEJTK/OtoHMcpWB3bwxUv5eEgS9L89lr2TdKui8ijtEPEZbXu7qtIj42vStis/GoOzvkChNUE=]
+
+services:
+  - name: brand-governance-mcp
+    # TODO: Replace with the actual git repo and branch for this MCP service.
+    git:
+      repo_clone_url: https://github.com/JonathanBowker/brand-governance-mcp.git
+      branch: main
+    dockerfile_path: Dockerfile
+    source_dir: /
+    http_port: 8000
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /mcp/brand-governance
+        preserve_path_prefix: true
+    envs:
+      - key: AA_MCP_HOST
+        scope: RUN_TIME
+        value: "0.0.0.0"
+      - key: AA_MCP_PORT
+        scope: RUN_TIME
+        value: "8000"
+      - key: AA_MCP_PATH
+        scope: RUN_TIME
+        value: /mcp/brand-governance
+      - key: AA_MCP_TRANSPORT
+        scope: RUN_TIME
+        value: http
+      - key: AA_LOG_LEVEL
+        scope: RUN_TIME
+        value: INFO
+      - key: AA_PRESIGN_EXPIRY
+        scope: RUN_TIME
+        value: "3600"
+      - key: AA_KEYS_BUCKET
+        scope: RUN_TIME
+        value: aa-keys
+      - key: AA_KEYS_REGION
+        scope: RUN_TIME
+        value: eu-west-2
+      - key: AA_KEYS_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_AWS_ACCESS_KEY_ID
+      - key: AA_KEYS_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_AWS_SECRET_ACCESS_KEY
+      - key: AA_KEYS_SESSION_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: ""
+      - key: AA_S3_ENDPOINT
+        scope: RUN_TIME
+        value: https://brand-store.lon1.digitaloceanspaces.com
+      - key: AA_S3_REGION
+        scope: RUN_TIME
+        value: lon1
+      - key: DO_SPACES_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_DO_SPACES_KEY
+      - key: DO_SPACES_SECRET
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_DO_SPACES_SECRET
+      - key: AA_UPGRADE_URL
+        scope: RUN_TIME
+        value: https://advancedanalytica.co.uk/brand-governance
+      - key: AA_SUPPORT_EMAIL
+        scope: RUN_TIME
+        value: jonathan@advancedanalytica.co.uk
+
+ingress:
+  rules:
+    - match:
+        path:
+          prefix: /mcp/brand-governance
+      component:
+        name: brand-governance-mcp
+      preserve_path_prefix: true
+    - match:
+        path:
+          prefix: /api
+      component:
+        name: lead-api
+    - match:
+        path:
+          prefix: /
+      component:
+        name: web

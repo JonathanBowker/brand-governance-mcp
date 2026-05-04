@@ -1,0 +1,60 @@
+{
+  "bgml": {
+    "version": "1.0",
+    "schema": "https://brandsemantics.com/schema/bgml/1.0",
+    "meta": {
+      "brand": "PwC",
+      "owner": "PwC Business Trust",
+      "layer": 1,
+      "contact": "jonathan@advancedanalytica.co.uk"
+    },
+    "precedence": [
+      "safety",
+      "regulatory",
+      "legal",
+      "core-brand",
+      "standards",
+      "applications",
+      "audiences",
+      "markets",
+      "exceptions"
+    ],
+    "standards": [
+      {
+        "id": "logo",
+        "category": "visual",
+        "tier": "standards",
+        "status": "active",
+        "name": "Logo",
+        "description": "PwC logo standards. Clear space measured by height of lowercase c in wordmark. Minimum size: 0.375in print, 48px digital.",
+        "files": {
+          "markdown": "standards/logo/page.md",
+          "yaml": "standards/logo/page.yaml",
+          "json": null,
+          "images": {
+            "path": "standards/logo/images/",
+            "count": 0
+          }
+        },
+        "keyRules": [
+          "Never separate wordmark from Momentum Mark",
+          "Never recolour, stretch, skew or add effects to logo",
+          "Only use assets downloaded from brand site"
+        ],
+        "related": [
+          "momentum-mark",
+          "colour",
+          "grid-system",
+          "co-branding"
+        ],
+        "tags": [
+          "visual",
+          "logo",
+          "identity"
+        ],
+        "version": "2026.1",
+        "lastModified": "2026-05-04"
+      }
+    ]
+  }
+}
