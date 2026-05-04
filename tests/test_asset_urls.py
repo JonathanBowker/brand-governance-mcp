@@ -14,6 +14,8 @@ def test_asset_url_round_trip():
     assert parsed.query == ""
     assert parsed.path.endswith("/logo.png")
     token = parsed.path.split("/brand-governance-asset/", 1)[1].split("/", 1)[0]
+    _asset, _separator, sig = token.rpartition(".")
+    assert len(sig) == 32
     resolved = resolve_asset_path_token(token)
     assert resolved is not None
     assert resolved[0] == bucket
