@@ -33,7 +33,7 @@ def _spaces_client():
     kwargs: dict[str, Any] = {
         "service_name": "s3",
         "region_name": settings.s3_region,
-        "config": Config(signature_version="s3v4"),
+        "config": Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
     }
     endpoint_url = _normalise_spaces_endpoint(settings.s3_endpoint)
     if endpoint_url:
