@@ -81,7 +81,7 @@ AA_KEYS_BUCKET=aa-keys
 AA_KEYS_PROFILE=SchemaStreamCDNDeploy
 AA_MCP_HOST=0.0.0.0
 AA_MCP_PORT=8000
-AA_MCP_PATH=/brand-governance
+AA_MCP_PATH=/mcp/brand-governance
 AA_MCP_TRANSPORT=http
 AA_LOG_LEVEL=INFO
 AA_PRESIGN_EXPIRY=3600
@@ -117,7 +117,7 @@ The `indexFile` field may point at a Spaces object URL such as `https://brand-st
   "created": "2026-05-04T09:00:00Z",
   "expires": "2026-06-03T09:00:00Z",
   "status": "active",
-  "mcpEndpoint": "https://mcp.advancedanalytica.co.uk/brand-governance",
+  "mcpEndpoint": "https://advancedanalytica.co.uk/mcp/brand-governance",
   "bucketUri": "s3://aa-brand-pwc-trial/",
   "indexFile": "s3://aa-brand-pwc-trial/bgml-index.json",
   "accessControl": {
@@ -171,8 +171,10 @@ This repo includes an App Platform spec at [.do/app.yaml](/Users/jbb/Projects/de
 The intended shared app hostname is:
 
 ```text
-https://advancedanalytica-co-uk-omj3v.ondigitalocean.app/mcp/brand-governance
+https://advancedanalytica.co.uk/mcp/brand-governance
 ```
+
+Direct browser access to this route is expected to return an MCP protocol error such as `406 Not Acceptable` or a session-related `400` response. Use an MCP client such as Claude Desktop or a FastMCP client for real tool calls.
 
 The spec is sized for a small managed service:
 
@@ -229,7 +231,7 @@ Add to `~/.claude/mcp.json`:
 {
   "mcpServers": {
     "brand-governance": {
-      "url": "https://mcp.advancedanalytica.co.uk/brand-governance",
+      "url": "https://advancedanalytica.co.uk/mcp/brand-governance",
       "headers": {
         "X-Brand-Key": "sk-brand-pwc-redacted"
       }
