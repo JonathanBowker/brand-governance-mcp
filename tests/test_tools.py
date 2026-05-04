@@ -51,6 +51,10 @@ async def test_brand_get_image_list(s3_env):
     assert response["images"][0]["filename"] == "logo.png"
     assert "imageUrl" in response["images"][0]
     assert response["images"][0]["imageUrl"].startswith("https://advancedanalytica.co.uk/")
+    assert response["images"][0]["url"] == response["images"][0]["imageUrl"]
+    assert response["images"][0]["src"] == response["images"][0]["imageUrl"]
+    assert response["images"][0]["thumbnailUrl"] == response["images"][0]["imageUrl"]
+    assert response["images"][0]["alt"] == "Primary logo example"
     assert "presignedUrl" not in response["images"][0]
     assert response["images"][0]["assetType"] == "logo_variant"
     assert response["images"][0]["variant"] == "full_lockup"
@@ -89,3 +93,7 @@ async def test_brand_get_image_list_toolkit(s3_env):
     assert response["count"] == 1
     assert response["images"][0]["filename"] == "social.png"
     assert response["images"][0]["imageUrl"].startswith("https://advancedanalytica.co.uk/")
+    assert response["images"][0]["url"] == response["images"][0]["imageUrl"]
+    assert response["images"][0]["src"] == response["images"][0]["imageUrl"]
+    assert response["images"][0]["thumbnailUrl"] == response["images"][0]["imageUrl"]
+    assert response["images"][0]["alt"] == "social.png"
