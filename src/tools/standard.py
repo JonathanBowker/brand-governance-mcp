@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
+from fastmcp.dependencies import CurrentHeaders
 
-from src.auth import validate_key
+from src.auth import resolve_api_key, validate_key
 from src.errors import NotFoundError, tool_error_boundary
 from src.policy.entitlements import require_collection_access, require_format
 from src.s3 import S3ObjectNotFound, get_object
@@ -59,5 +60,12 @@ def register(mcp: FastMCP):
         description="Fetch a specific brand standard by ID. Returns content, key rules and metadata.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
-    async def brand_get_standard(standard_id: str, format: str = "markdown", api_key: str = "") -> dict:
-        return await tool_error_boundary(run_brand_get_standard(api_key, standard_id, format))
+    async def brand_get_standard(
+        standard_id: str,
+        format: str = "markdown",
+        api_key: str = "",
+        headers: dict[str, str] = CurrentHeaders(),
+    ) -> dict:
+        return await tool_error_boundary(
+            run_brand_get_standard(resolve_api_key(api_key, headers), standard_id, format)
+        )

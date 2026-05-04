@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
+from fastmcp.dependencies import CurrentHeaders
 
-from src.auth import validate_key
+from src.auth import resolve_api_key, validate_key
 from src.errors import tool_error_boundary
 from src.policy.entitlements import require_collection_access
 from src.tools.common import find_entry, load_index
@@ -28,5 +29,9 @@ def register(mcp: FastMCP):
         description="Return indexed key rules for a brand standard.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
-    async def brand_get_rules(standard_id: str, api_key: str = "") -> dict:
-        return await tool_error_boundary(run_brand_get_rules(api_key, standard_id))
+    async def brand_get_rules(
+        standard_id: str,
+        api_key: str = "",
+        headers: dict[str, str] = CurrentHeaders(),
+    ) -> dict:
+        return await tool_error_boundary(run_brand_get_rules(resolve_api_key(api_key, headers), standard_id))

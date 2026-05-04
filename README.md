@@ -240,6 +240,8 @@ Add to `~/.claude/mcp.json`:
 }
 ```
 
+The server also accepts connection-level `Authorization: Bearer <key>` auth for remote MCP clients that expose an API key field instead of custom headers.
+
 ## Connecting OpenAI / ChatGPT
 
 Use OpenAI's Responses API remote MCP configuration with a Streamable HTTP/SSE-compatible MCP endpoint. Pass the brand key through the remote MCP authorization/header configuration supported in your client environment.

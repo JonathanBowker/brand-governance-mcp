@@ -1,6 +1,7 @@
 import hmac
 import logging
 from datetime import UTC, datetime
+from typing import Mapping
 
 from pydantic import ValidationError
 
@@ -15,6 +16,29 @@ logger = logging.getLogger(__name__)
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def resolve_api_key(api_key: str = "", headers: Mapping[str, str] | None = None) -> str:
+    key = api_key.strip()
+    if key:
+        return key
+
+    if not headers:
+        return ""
+
+    direct = (headers.get("x-brand-key") or headers.get("x-api-key") or "").strip()
+    if direct:
+        return direct
+
+    authorization = (headers.get("authorization") or "").strip()
+    if not authorization:
+        return ""
+
+    parts = authorization.split(None, 1)
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1].strip()
+
+    return authorization
 
 
 def _log_validation(event: str, *, client_id: str | None, key_hint: str | None = None, detail: str = "") -> None:
@@ -84,4 +108,4 @@ async def validate_key(api_key: str) -> ClientKey:
     return client
 
 
-__all__ = ["validate_key", "AccessDeniedError", "KeyExpiredError", "KeyInvalidError"]
+__all__ = ["validate_key", "resolve_api_key", "AccessDeniedError", "KeyExpiredError", "KeyInvalidError"]

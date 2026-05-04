@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
+from fastmcp.dependencies import CurrentHeaders
 
-from src.auth import validate_key
+from src.auth import resolve_api_key, validate_key
 from src.errors import NotFoundError, tool_error_boundary
 from src.policy.entitlements import require_collection_access, require_format
 from src.s3 import S3ObjectNotFound, get_object
@@ -93,13 +94,23 @@ def register(mcp: FastMCP):
         description="List available indexed brand content across standards, toolkits, asset-library, digital, and other collections.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
-    async def brand_list_content(api_key: str = "", group: str = "all", category: str = "all") -> dict:
-        return await tool_error_boundary(run_brand_list_content(api_key, group, category))
+    async def brand_list_content(
+        api_key: str = "",
+        group: str = "all",
+        category: str = "all",
+        headers: dict[str, str] = CurrentHeaders(),
+    ) -> dict:
+        return await tool_error_boundary(run_brand_list_content(resolve_api_key(api_key, headers), group, category))
 
     @mcp.tool(
         name="brand_get_content",
         description="Fetch indexed brand content by ID from any available collection.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
-    async def brand_get_content(content_id: str, format: str = "markdown", api_key: str = "") -> dict:
-        return await tool_error_boundary(run_brand_get_content(api_key, content_id, format))
+    async def brand_get_content(
+        content_id: str,
+        format: str = "markdown",
+        api_key: str = "",
+        headers: dict[str, str] = CurrentHeaders(),
+    ) -> dict:
+        return await tool_error_boundary(run_brand_get_content(resolve_api_key(api_key, headers), content_id, format))

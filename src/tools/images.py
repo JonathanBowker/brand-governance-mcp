@@ -2,8 +2,9 @@ import json
 from pathlib import PurePosixPath
 
 from fastmcp import FastMCP
+from fastmcp.dependencies import CurrentHeaders
 
-from src.auth import validate_key
+from src.auth import resolve_api_key, validate_key
 from src.config import settings
 from src.errors import NotFoundError, tool_error_boundary
 from src.policy.entitlements import require_collection_access
@@ -79,5 +80,9 @@ def register(mcp: FastMCP):
         description="Return available images for a standard as short-lived presigned URLs.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
-    async def brand_get_image_list(standard_id: str, api_key: str = "") -> dict:
-        return await tool_error_boundary(run_brand_get_image_list(api_key, standard_id))
+    async def brand_get_image_list(
+        standard_id: str,
+        api_key: str = "",
+        headers: dict[str, str] = CurrentHeaders(),
+    ) -> dict:
+        return await tool_error_boundary(run_brand_get_image_list(resolve_api_key(api_key, headers), standard_id))

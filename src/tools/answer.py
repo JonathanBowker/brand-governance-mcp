@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
+from fastmcp.dependencies import CurrentHeaders
 
-from src.auth import validate_key
+from src.auth import resolve_api_key, validate_key
 from src.errors import NotFoundError, tool_error_boundary
 from src.policy.entitlements import require_collection_access
 from src.s3 import S3ObjectNotFound, get_object
@@ -89,5 +90,8 @@ def register(mcp: FastMCP):
         mode: str = "detailed",
         include_sources: bool = True,
         api_key: str = "",
+        headers: dict[str, str] = CurrentHeaders(),
     ) -> dict:
-        return await tool_error_boundary(run_brand_answer_question(api_key, question, mode, include_sources))
+        return await tool_error_boundary(
+            run_brand_answer_question(resolve_api_key(api_key, headers), question, mode, include_sources)
+        )

@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
+from fastmcp.dependencies import CurrentHeaders
 
-from src.auth import validate_key
+from src.auth import resolve_api_key, validate_key
 from src.errors import tool_error_boundary
 
 
@@ -25,5 +26,5 @@ def register(mcp: FastMCP):
         description="Return current access control state for the client's key.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
-    async def brand_check_access(api_key: str = "") -> dict:
-        return await tool_error_boundary(run_brand_check_access(api_key))
+    async def brand_check_access(api_key: str = "", headers: dict[str, str] = CurrentHeaders()) -> dict:
+        return await tool_error_boundary(run_brand_check_access(resolve_api_key(api_key, headers)))
