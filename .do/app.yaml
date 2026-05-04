@@ -9,6 +9,8 @@ services:
     instance_count: 1
     instance_size_slug: basic-xxs
     routes:
+      - path: /mcp/brand-governance-asset
+        preserve_path_prefix: true
       - path: /mcp/brand-governance
         preserve_path_prefix: true
     envs:

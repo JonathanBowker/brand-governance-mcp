@@ -121,6 +121,12 @@ ingress:
   rules:
     - match:
         path:
+          prefix: /mcp/brand-governance-asset
+      component:
+        name: brand-governance-mcp
+        preserve_path_prefix: true
+    - match:
+        path:
           prefix: /mcp/brand-governance
       component:
         name: brand-governance-mcp

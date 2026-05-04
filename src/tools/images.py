@@ -61,7 +61,6 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
                 "path": key,
                 "watermark": client.watermark,
                 "imageUrl": image_url,
-                "presignedUrl": image_url,
                 "expiresInSeconds": settings.presign_expiry,
             }
         )

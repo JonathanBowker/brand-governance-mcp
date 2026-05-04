@@ -49,10 +49,9 @@ async def test_brand_get_image_list(s3_env):
     response = await run_brand_get_image_list(VALID_KEY, "logo")
     assert response["count"] == 1
     assert response["images"][0]["filename"] == "logo.png"
-    assert "presignedUrl" in response["images"][0]
     assert "imageUrl" in response["images"][0]
     assert response["images"][0]["imageUrl"].startswith("https://advancedanalytica.co.uk/")
-    assert response["images"][0]["presignedUrl"] == response["images"][0]["imageUrl"]
+    assert "presignedUrl" not in response["images"][0]
 
 
 async def test_brand_answer_question(s3_env):
