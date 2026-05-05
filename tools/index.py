@@ -45,7 +45,7 @@ def main() -> None:
     index = {
         "bgml": {
             "version": "1.0",
-            "schema": "https://brandsemantics.com/schema/bgml/1.0",
+            "schema": "https://advancedanalytica.co.uk/schema/bgml/1.0",
             "meta": {"brand": args.brand_name, "clientId": args.client_id, "layer": 1},
             "precedence": ["safety", "regulatory", "legal", "core-brand", "standards", "applications", "audiences", "markets", "exceptions"],
             "standards": standards,
