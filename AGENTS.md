@@ -35,6 +35,8 @@ A Python FastMCP server that:
 - Log every key validation attempt with clientId where known and timestamp.
 - Handle key not found separately from invalid or access-denied cases.
 - Use camelCase aliases in API-facing Pydantic models.
+- Add clear docstrings to Python modules, public functions, tool handlers, and non-obvious helper functions by default.
+- Keep docstrings concise and practical: explain purpose, important behavior, inputs, outputs, and fallback rules where they are not obvious from the signature.
 - Check capability gates before reading protected files.
 - Treat AWS S3 as the key store only; keep all brand content reads and writes on DigitalOcean Spaces.
 

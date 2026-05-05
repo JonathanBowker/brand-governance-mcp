@@ -9,7 +9,7 @@ from src.tools.index import run_brand_get_index
 from src.tools.list import run_brand_list_standards
 from src.tools.rules import run_brand_get_rules
 from src.tools.standard import run_brand_get_standard
-from tests.conftest import TOOLKIT_KEY, VALID_KEY
+from tests.conftest import JSON_KEY, TOOLKIT_KEY, VALID_KEY
 
 
 async def test_brand_get_index(s3_env):
@@ -20,12 +20,20 @@ async def test_brand_get_index(s3_env):
 
 async def test_brand_list_standards(s3_env):
     response = await run_brand_list_standards(VALID_KEY, category="visual")
-    assert response["count"] == 2
+    assert response["count"] == 3
 
 
 async def test_brand_get_standard_markdown(s3_env):
     response = await run_brand_get_standard(VALID_KEY, "logo", "markdown")
     assert response["standardId"] == "logo"
+    assert "Clear space" in response["content"]
+
+
+async def test_brand_get_standard_defaults_to_markdown_without_json_access(s3_env):
+    response = await run_brand_get_standard(VALID_KEY, "logo")
+    assert response["standardId"] == "logo"
+    assert response["format"] == "markdown"
+    assert response["requestedFormat"] == "auto"
     assert "Clear space" in response["content"]
 
 
@@ -68,6 +76,30 @@ async def test_brand_answer_question(s3_env):
     response = await run_brand_answer_question(VALID_KEY, "What is the logo clear space?", mode="concise")
     assert response["ok"] is True
     assert "Logo" in response["answer"]
+
+
+async def test_brand_get_standard_json_with_layer_3_access(s3_env):
+    response = await run_brand_get_standard(JSON_KEY, "data-visualisation", "json")
+    assert response["standardId"] == "data-visualisation"
+    assert '"contexts": {"levels": ["level_1", "level_2"]}' in response["content"]
+
+
+async def test_brand_get_standard_defaults_to_json_with_layer_3_access(s3_env):
+    response = await run_brand_get_standard(JSON_KEY, "data-visualisation")
+    assert response["standardId"] == "data-visualisation"
+    assert response["format"] == "json"
+    assert response["requestedFormat"] == "auto"
+    assert '"contexts": {"levels": ["level_1", "level_2"]}' in response["content"]
+
+
+async def test_brand_answer_question_prefers_json_sidecar_when_available(s3_env):
+    response = await run_brand_answer_question(JSON_KEY, "What should I use for level_1 charts?", mode="detailed")
+    assert response["ok"] is True
+    assert "Matched applicability:" in response["answer"]
+    assert "Token Level 1 palette: Use solid orange and grey tints for level_1 charts." in response["answer"]
+    assert response["standardsUsed"][0]["sourceType"] == "json"
+    assert "level_1" in response["standardsUsed"][0]["matchedApplicability"]
+    assert response["standardsUsed"][0]["related"] == ["standard.colour", "standard.typography"]
 
 
 async def test_brand_list_content_toolkits(s3_env):

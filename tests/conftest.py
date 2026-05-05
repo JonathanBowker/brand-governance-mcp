@@ -18,6 +18,7 @@ VALID_KEY = "sk-brand-pwc-testvalid123456"
 EXPIRED_KEY = "sk-brand-pwc-expired123456"
 INVALID_STATUS_KEY = "sk-brand-pwc-invalid123456"
 TOOLKIT_KEY = "sk-brand-pwc-toolkits123456"
+JSON_KEY = "sk-brand-pwc-json123456"
 KEYS_BUCKET = "aa-keys"
 BRAND_BUCKET = "aa-brand-pwc-trial"
 
@@ -63,6 +64,25 @@ def bgml_index() -> dict:
                     "version": "2026.1",
                     "lastModified": "2026-05-04",
                 },
+                {
+                    "id": "data-visualisation",
+                    "category": "visual",
+                    "tier": "standards",
+                    "status": "active",
+                    "name": "Data Visualisation",
+                    "description": "Guidance for charts, tables, palettes, and level-based data visualisation use.",
+                    "files": {
+                        "markdown": "standards/data-visualisation/page.md",
+                        "yaml": "standards/data-visualisation/page.yaml",
+                        "json": "standards/data-visualisation/page.json",
+                        "images": {"path": "standards/data-visualisation/images/", "count": 0},
+                    },
+                    "keyRules": ["Lead with orange in data visualisations", "Use level-based palette guidance"],
+                    "related": ["colour", "typography"],
+                    "tags": ["visual", "charts", "tables", "level_1", "level_2"],
+                    "version": "2026.1",
+                    "lastModified": "2026-05-05",
+                },
             ],
             "collections": {
                 "standards": [],
@@ -96,6 +116,7 @@ def bgml_index() -> dict:
 def key_record(
     raw_key: str,
     *,
+    tier: int = 1,
     expired: bool = False,
     status: str = "active",
     toolkits: bool = False,
@@ -110,7 +131,7 @@ def key_record(
         "clientName": "PricewaterhouseCoopers",
         "keyHash": key_hash_value(raw_key),
         "keyHint": f"...{raw_key[-4:]}",
-        "tier": 1,
+        "tier": tier,
         "created": now.isoformat(),
         "expires": expires.isoformat(),
         "ttlDays": 30,
@@ -176,6 +197,93 @@ def s3_env(monkeypatch):
             ).encode("utf-8"),
         )
         s3.put_object(Bucket=BRAND_BUCKET, Key="standards/colour/page.md", Body=b"# Colour\nLead with orange.")
+        s3.put_object(
+            Bucket=BRAND_BUCKET,
+            Key="standards/data-visualisation/page.md",
+            Body=(
+                b"# Data Visualisation\n"
+                b"Level 1 uses solid orange and grey tints for everyday practitioner charts.\n"
+                b"Level 2 may use gradients for designer-led applications."
+            ),
+        )
+        s3.put_object(Bucket=BRAND_BUCKET, Key="standards/data-visualisation/page.yaml", Body=b"standard_id: data-visualisation")
+        s3.put_object(
+            Bucket=BRAND_BUCKET,
+            Key="standards/data-visualisation/page.json",
+            Body=json.dumps(
+                {
+                    "standard": {
+                        "id": "standard.data_visualisation",
+                        "title": "Data Visualisation",
+                        "category": "visual",
+                        "status": "active",
+                        "version": "2026",
+                    },
+                    "bgml": {
+                        "canonical_id": "pwc.brand.standard.data_visualisation",
+                        "related_standards": ["standard.colour", "standard.typography"],
+                    },
+                    "applicability": {
+                        "use_cases": ["charts", "tables"],
+                        "scopes": ["all_data_visualisations", "tables", "gradients"],
+                        "contexts": {"levels": ["level_1", "level_2"]},
+                    },
+                    "mcp": {
+                        "return_format": "json",
+                        "content_format": "markdown",
+                        "retrieval_tags": ["data_visualisation", "level_1", "level_2", "charts", "tables"],
+                        "response_groups": ["summary", "key_requirements", "level_1", "level_2", "rules", "restrictions", "tokens"],
+                    },
+                    "rules": [
+                        {
+                            "id": "rule.data_visualisation.lead_with_orange",
+                            "severity": "required",
+                            "statement": "Lead with orange in all data visualisations.",
+                            "applies_to": ["all_data_visualisations"],
+                            "source_section": "Key points",
+                        }
+                    ],
+                    "restrictions": [
+                        {
+                            "id": "restriction.data_visualisation.no_gradients_level_1",
+                            "severity": "prohibited",
+                            "statement": "Do not use gradients in level_1 applications.",
+                            "applies_to": ["level_1"],
+                            "source_section": "Level 1",
+                        }
+                    ],
+                    "tokens": [
+                        {
+                            "id": "token.data_visualisation.level_1_palette",
+                            "token_group": "colour_palettes",
+                            "name": "Level 1 palette",
+                            "type": "palette",
+                            "values": {
+                                "colours": [
+                                    "core_orange",
+                                    "orange_400",
+                                    "orange_300",
+                                    "grey_500",
+                                    "grey_300",
+                                ]
+                            },
+                            "usage": ["Use solid orange and grey tints for level_1 charts."],
+                            "restrictions": ["Do not use gradients in level_1 applications."],
+                            "applies_to": ["level_1"],
+                        }
+                    ],
+                    "examples": [
+                        {
+                            "id": "example.data_visualisation.level_1_charts",
+                            "type": "chart_examples",
+                            "description": "Level 1 bar charts and tables for everyday practitioner use.",
+                            "applies_to": ["level_1"],
+                            "source_section": "Level 1",
+                        }
+                    ],
+                }
+            ).encode("utf-8"),
+        )
         s3.put_object(Bucket=BRAND_BUCKET, Key="toolkits/social-media/page.md", Body=b"# Social Media Toolkit\nUse approved branded templates.")
         s3.put_object(Bucket=BRAND_BUCKET, Key="toolkits/social-media/page.yaml", Body=b"toolkit_id: social-media")
         s3.put_object(Bucket=BRAND_BUCKET, Key="toolkits/social-media/page.json", Body=b"{\"contentId\": \"toolkits/social-media\"}")
@@ -186,6 +294,12 @@ def s3_env(monkeypatch):
         s3.put_object(Bucket=KEYS_BUCKET, Key=valid_name, Body=json.dumps(key_record(VALID_KEY)).encode("utf-8"))
         toolkit_name = f"active/{key_lookup_name(TOOLKIT_KEY)}"
         s3.put_object(Bucket=KEYS_BUCKET, Key=toolkit_name, Body=json.dumps(key_record(TOOLKIT_KEY, toolkits=True, yaml_sidecars=True)).encode("utf-8"))
+        json_name = f"active/{key_lookup_name(JSON_KEY)}"
+        s3.put_object(
+            Bucket=KEYS_BUCKET,
+            Key=json_name,
+            Body=json.dumps(key_record(JSON_KEY, tier=3, json_tokens=True)).encode("utf-8"),
+        )
         expired_name = f"active/{key_lookup_name(EXPIRED_KEY)}"
         s3.put_object(Bucket=KEYS_BUCKET, Key=expired_name, Body=json.dumps(key_record(EXPIRED_KEY, expired=True)).encode("utf-8"))
         invalid_name = f"active/{key_lookup_name(INVALID_STATUS_KEY)}"

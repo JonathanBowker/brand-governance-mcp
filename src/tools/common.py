@@ -8,16 +8,19 @@ from src.utils.s3_uri import parse_s3_uri
 
 
 def tokenize(text: str) -> set[str]:
-    return {t for t in re.findall(r"[a-z0-9-]+", text.lower()) if len(t) > 2}
+    """Split free text into normalized search tokens used by retrieval helpers."""
+    return {t for t in re.findall(r"[a-z0-9_-]+", text.lower()) if len(t) > 2}
 
 
 async def load_index(client: ClientKey) -> BgmlIndex:
+    """Load and parse the client's BGML index from the configured storage URI."""
     uri = parse_s3_uri(client.index_file)
     raw = await get_object(uri.bucket, uri.key)
     return parse_bgml(raw)
 
 
 def all_entries(index: BgmlIndex) -> list[IndexEntry]:
+    """Flatten standards and collection entries into one lookup-friendly list."""
     entries: dict[str, IndexEntry] = {}
     for standard in index.standards:
         entries[standard.id] = standard
@@ -28,6 +31,7 @@ def all_entries(index: BgmlIndex) -> list[IndexEntry]:
 
 
 def _match_by_slug(entries: list[IndexEntry], content_id: str) -> IndexEntry | None:
+    """Match a content identifier against either an explicit slug or trailing path segment."""
     matches = [entry for entry in entries if entry.slug == content_id or entry.id.split("/")[-1] == content_id]
     if len(matches) == 1:
         return matches[0]
@@ -35,6 +39,7 @@ def _match_by_slug(entries: list[IndexEntry], content_id: str) -> IndexEntry | N
 
 
 def find_entry(index: BgmlIndex, content_id: str, *, group: str | None = None) -> IndexEntry:
+    """Resolve a content entry by exact id or unique slug within the optional group."""
     entries = all_entries(index)
     if group is not None:
         entries = [entry for entry in entries if (entry.group or "standards") == group]
@@ -51,6 +56,7 @@ def find_entry(index: BgmlIndex, content_id: str, *, group: str | None = None) -
 
 
 def find_standard(index: BgmlIndex, standard_id: str) -> Standard:
+    """Resolve a standard by exact id or unique slug-like trailing segment."""
     for standard in index.standards:
         if standard.id == standard_id:
             return standard
@@ -64,6 +70,7 @@ def find_standard(index: BgmlIndex, standard_id: str) -> Standard:
 
 
 def summarise_standard(standard: Standard) -> dict:
+    """Return the API summary shape used by standards listing tools."""
     return {
         "id": standard.id,
         "name": standard.name,
@@ -79,6 +86,7 @@ def summarise_standard(standard: Standard) -> dict:
 
 
 def summarise_entry(entry: IndexEntry) -> dict:
+    """Return the API summary shape used by collection listing tools."""
     return {
         "id": entry.id,
         "slug": entry.slug,
@@ -96,6 +104,7 @@ def summarise_entry(entry: IndexEntry) -> dict:
 
 
 def score_entry(entry: IndexEntry, query_tokens: set[str]) -> int:
+    """Score an index entry by overlap between query tokens and indexed text fields."""
     haystack = " ".join(
         [
             entry.id,
@@ -113,6 +122,7 @@ def score_entry(entry: IndexEntry, query_tokens: set[str]) -> int:
 
 
 def best_matches(index: BgmlIndex, question: str, limit: int = 3, groups: set[str] | None = None) -> list[IndexEntry]:
+    """Return the highest-scoring entries for a natural-language question."""
     q = tokenize(question)
     if not q:
         return []
