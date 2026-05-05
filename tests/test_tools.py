@@ -1,4 +1,5 @@
 import pytest
+from fastmcp.server.tasks.config import TaskConfig
 
 from src.errors import CapabilityLockedError
 from src.tools.access import run_brand_check_access
@@ -9,6 +10,7 @@ from src.tools.index import run_brand_get_index
 from src.tools.list import run_brand_list_standards
 from src.tools.rules import run_brand_get_rules
 from src.tools.standard import run_brand_get_standard
+from src.workflows.tasking import optional_task_config, supports_background_tasks
 from tests.conftest import JSON_KEY, TOOLKIT_KEY, VALID_KEY
 
 
@@ -129,3 +131,12 @@ async def test_brand_get_image_list_toolkit(s3_env):
     assert response["images"][0]["src"] == response["images"][0]["imageUrl"]
     assert response["images"][0]["thumbnailUrl"] == response["images"][0]["imageUrl"]
     assert response["images"][0]["alt"] == "social.png"
+
+
+def test_optional_task_config_matches_runtime():
+    config = optional_task_config()
+    if supports_background_tasks():
+        assert isinstance(config, TaskConfig)
+        assert config.mode == "optional"
+    else:
+        assert config is False

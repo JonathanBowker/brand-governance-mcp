@@ -81,6 +81,7 @@ src/
   resources/
   schema/
   templates/
+  workflows/
   tools/
   models/
   policy/
@@ -95,8 +96,16 @@ Use the new `src/` subdirectories with these responsibilities:
 - `src/resources/` for runtime resource loaders and resource-oriented helpers
 - `src/schema/` for BGML and structured-content semantic interpretation helpers
 - `src/templates/` for response-formatting helpers
+- `src/workflows/` for multi-step orchestration that may be exposed through FastMCP task execution
 
 Do not store client binary assets in the application code tree. PowerPoint, InDesign, ZIP, video, audio, and other downloadable brand assets must live in DigitalOcean Spaces inside the relevant client dataset, not under `src/` or other repo code folders.
+
+When adding FastMCP task support:
+
+- Keep the public MCP interface in `src/tools/`.
+- Put task-capable orchestration in `src/workflows/`.
+- Prefer optional task mode first unless the feature truly requires background execution.
+- Keep normal synchronous tool calls working unless the human explicitly asks for task-only behavior.
 
 ## Tool list
 

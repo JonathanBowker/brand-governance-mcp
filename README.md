@@ -28,6 +28,7 @@ The MCP now separates retrieval behavior into a few focused code areas under `sr
 - `src/resources/`: runtime content-loading helpers for Markdown, JSON sidecars, and future managed resources
 - `src/schema/`: semantic helpers for BGML interpretation such as applicability, contexts, and scopes
 - `src/templates/`: response-formatting helpers that turn structured data into client-facing output
+- `src/workflows/`: multi-step orchestration used for task-capable FastMCP workflows and future Inspector task runs
 
 Use these directories for MCP application behavior and reusable loaders or formatters.
 
@@ -112,6 +113,18 @@ The BGML index can contain both:
 | `brand_answer_question` | 1 | Answer from BGML metadata and Markdown excerpts across permitted collections |
 
 Future tools can be added for governed validation, conflict resolution, token export, and semantic search.
+
+## FastMCP Tasks And Workflows
+
+Use normal MCP tools for direct request and response calls.
+
+Use `src/workflows/` when a feature becomes a multi-step operation that may later run as a FastMCP background task in Inspector. In this repo:
+
+- tools are the public MCP surface
+- workflows are the orchestration behind longer-running or progress-aware operations
+- task runs are live executions of those workflows in FastMCP
+
+`brand_answer_question` is wired so it can participate in FastMCP task execution when the `fastmcp[tasks]` runtime is installed. Standard synchronous calls still work the same way.
 
 ## Quick start
 
