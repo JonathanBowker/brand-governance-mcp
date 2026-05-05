@@ -77,6 +77,10 @@ src/
   s3.py
   config.py
   errors.py
+  prompts/
+  resources/
+  schema/
+  templates/
   tools/
   models/
   policy/
@@ -84,6 +88,15 @@ src/
 ```
 
 Do not create new top-level code folders. Add new concerns under `src/`.
+
+Use the new `src/` subdirectories with these responsibilities:
+
+- `src/prompts/` for prompt and instruction helpers
+- `src/resources/` for runtime resource loaders and resource-oriented helpers
+- `src/schema/` for BGML and structured-content semantic interpretation helpers
+- `src/templates/` for response-formatting helpers
+
+Do not store client binary assets in the application code tree. PowerPoint, InDesign, ZIP, video, audio, and other downloadable brand assets must live in DigitalOcean Spaces inside the relevant client dataset, not under `src/` or other repo code folders.
 
 ## Tool list
 

@@ -20,6 +20,19 @@ Brand Governance Markup Language (BGML) is the structured index and retrieval fo
 - Provides a Layer 1 `brand_answer_question` tool using indexed metadata and Markdown excerpts across permitted collections.
 - Runs locally or on DigitalOcean App Platform.
 
+## Code Structure
+
+The MCP now separates retrieval behavior into a few focused code areas under `src/`:
+
+- `src/prompts/`: prompt and instruction helpers that control answer behavior, modes, and limitation text
+- `src/resources/`: runtime content-loading helpers for Markdown, JSON sidecars, and future managed resources
+- `src/schema/`: semantic helpers for BGML interpretation such as applicability, contexts, and scopes
+- `src/templates/`: response-formatting helpers that turn structured data into client-facing output
+
+Use these directories for MCP application behavior and reusable loaders or formatters.
+
+Do not store client asset files such as PowerPoint templates, InDesign packages, ZIP bundles, videos, or other binary brand resources in the application code tree. Those belong in DigitalOcean Spaces inside the client dataset, with the MCP code loading or describing them as needed.
+
 ## Data contract
 
 Each indexed content folder follows this pattern:

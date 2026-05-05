@@ -1,71 +1,19 @@
 """Question-answering tool that blends BGML metadata with structured sidecars."""
 
-import json
-
 from fastmcp import FastMCP
 from fastmcp.dependencies import CurrentHeaders
 
 from src.auth import resolve_api_key, validate_key
 from src.errors import NotFoundError, tool_error_boundary
 from src.policy.entitlements import has_format_access, require_collection_access
-from src.s3 import S3ObjectNotFound, get_object
+from src.prompts.answer import answer_limitations, answer_mode_settings
+from src.resources.loader import load_json_document, load_markdown_excerpt
+from src.schema.bgml_reference import applicability_terms, matching_applicability_terms
+from src.templates.answers import render_answer_section, render_structured_candidate
 from src.tools.common import best_matches, load_index, tokenize
 
 MAX_EXCERPT_CHARS = 1200
 MAX_STRUCTURED_ITEMS = 4
-
-
-async def _markdown_excerpt(bucket_uri: str, path: str | None) -> str:
-    """Load and lightly compress Markdown into a bounded excerpt for fallback answers."""
-    if not path:
-        return ""
-    try:
-        content = await get_object(bucket_uri, path)
-    except S3ObjectNotFound:
-        return ""
-    cleaned = "\n".join(line.strip() for line in content.splitlines() if line.strip())
-    return cleaned[:MAX_EXCERPT_CHARS]
-
-
-async def _load_json_sidecar(bucket_uri: str, path: str | None) -> dict | None:
-    """Load a JSON sidecar when present and return only dict payloads."""
-    if not path:
-        return None
-    try:
-        raw = await get_object(bucket_uri, path)
-    except S3ObjectNotFound:
-        return None
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        return None
-    return data if isinstance(data, dict) else None
-
-
-def _applicability_terms(sidecar: dict) -> set[str]:
-    """Collect applicability terms used to route and score standards answers."""
-    applicability = sidecar.get("applicability") or {}
-    terms: set[str] = set()
-    for field in ("relationship_types", "use_cases", "scopes", "channels", "audiences", "exceptions"):
-        for value in applicability.get(field, []) or []:
-            if isinstance(value, str):
-                terms.add(value)
-    contexts = applicability.get("contexts") or {}
-    if isinstance(contexts, dict):
-        for values in contexts.values():
-            for value in values or []:
-                if isinstance(value, str):
-                    terms.add(value)
-    return terms
-
-
-def _matching_terms(question_tokens: set[str], sidecar: dict) -> list[str]:
-    """Return applicability terms whose tokens overlap the incoming question."""
-    matches: list[str] = []
-    for term in sorted(_applicability_terms(sidecar)):
-        if tokenize(term) & question_tokens:
-            matches.append(term)
-    return matches
 
 
 def _item_text(item: dict) -> str:
@@ -123,8 +71,8 @@ def _render_candidate(kind: str, item: dict) -> str:
 def _structured_summary(sidecar: dict, question: str) -> tuple[str, list[str]]:
     """Build a concise structured answer summary from a standards JSON sidecar."""
     question_tokens = tokenize(question)
-    sidecar_terms = _applicability_terms(sidecar)
-    matches = _matching_terms(question_tokens, sidecar)
+    sidecar_terms = applicability_terms(sidecar)
+    matches = matching_applicability_terms(question_tokens, sidecar)
 
     candidates: list[tuple[int, str]] = []
     for kind, items_key in (
@@ -139,7 +87,7 @@ def _structured_summary(sidecar: dict, question: str) -> tuple[str, list[str]]:
             score = _score_item(item, question_tokens, sidecar_terms)
             if score <= 0:
                 continue
-            rendered = _render_candidate(kind, item)
+            rendered = render_structured_candidate(kind, item)
             if rendered:
                 candidates.append((score, rendered))
 
@@ -161,6 +109,7 @@ async def run_brand_answer_question(
 ) -> dict:
     """Answer a question from index metadata, preferring standards JSON sidecars when available."""
     client = await validate_key(api_key)
+    mode_settings = answer_mode_settings(mode)
     index = await load_index(client)
     allowed_groups = set()
     for group in ["standards", *index.collections.keys()]:
@@ -186,8 +135,12 @@ async def run_brand_answer_question(
         source_file = standard.files.markdown
         source_type = "markdown"
 
-        if (standard.group or "standards") == "standards" and has_format_access(client, "json"):
-            sidecar = await _load_json_sidecar(client.bucket_uri, standard.files.json_file)
+        if (
+            mode_settings["prefer_structured_guidance"]
+            and (standard.group or "standards") == "standards"
+            and has_format_access(client, "json")
+        ):
+            sidecar = await load_json_document(client.bucket_uri, standard.files.json_file)
             if sidecar:
                 structured_summary, matched_terms = _structured_summary(sidecar, question)
                 if structured_summary:
@@ -196,7 +149,11 @@ async def run_brand_answer_question(
 
         excerpt = ""
         if not structured_summary or mode == "strict":
-            excerpt = await _markdown_excerpt(client.bucket_uri, standard.files.markdown)
+            excerpt = await load_markdown_excerpt(
+                client.bucket_uri,
+                standard.files.markdown,
+                max_chars=MAX_EXCERPT_CHARS,
+            )
             if not source_file:
                 source_file = standard.files.markdown
                 source_type = "markdown"
@@ -217,13 +174,17 @@ async def run_brand_answer_question(
                 "matchedApplicability": matched_terms,
             }
         )
-        if mode == "concise":
-            answer_parts.append(f"{standard.name}: {standard.description}")
-        else:
-            rules = "; ".join(standard.key_rules[:6]) if standard.key_rules else "No indexed key rules."
-            details = f" Structured guidance: {structured_summary}" if structured_summary else ""
-            excerpt_text = f" Source excerpt: {excerpt}" if excerpt and mode != "strict" else ""
-            answer_parts.append(f"{standard.name}: {standard.description} Key rules: {rules}.{details}{excerpt_text}")
+        answer_parts.append(
+            render_answer_section(
+                name=standard.name,
+                description=standard.description,
+                key_rules=standard.key_rules,
+                structured_summary=structured_summary,
+                excerpt=excerpt,
+                is_concise=mode_settings["is_concise"],
+                include_markdown_excerpt=mode_settings["include_markdown_excerpt"],
+            )
+        )
 
     return {
         "ok": True,
@@ -232,10 +193,7 @@ async def run_brand_answer_question(
         "mode": mode,
         "answer": "\n\n".join(answer_parts),
         "standardsUsed": used if include_sources else [],
-        "limitations": [
-            "Answers use BGML index metadata and prefer standards JSON sidecars when the key can access them.",
-            "This is guidance, not full governed validation. YAML sidecars are required for Layer 2 validation.",
-        ],
+        "limitations": answer_limitations(),
     }
 
 
