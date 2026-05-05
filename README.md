@@ -47,7 +47,7 @@ standards/logo/
     manifest.json
 ```
 
-Image manifests are optional. When present, `brand_get_image_list` reads `images/manifest.json` and returns richer metadata for each asset.
+Image manifests are optional. When present, `brand_get_image_list` reads `images/manifest.json` and returns richer metadata for each asset. If a local manifest is missing, the MCP can also fall back to a parent `master-image-manifest.json` and use the matching entry for that content path.
 
 Layer behavior:
 
@@ -71,6 +71,7 @@ For governed image selection, `images/manifest.json` can define structured metad
       "filename": "logo-positive.png",
       "title": "Colour positive logo",
       "description": "Primary full-colour logo for white and light backgrounds.",
+      "section": "Approved variants",
       "usage": "primary_logo",
       "assetType": "logo_variant",
       "variant": "full_lockup",
@@ -92,6 +93,36 @@ For governed image selection, `images/manifest.json` can define structured metad
 ```
 
 Without a manifest, the MCP can still return filenames, paths, and image URLs, but it will not be able to make governed choices about variants, backgrounds, or use cases.
+
+### Image Metadata Generation
+
+This repo also includes an admin script for generating starter `images/manifest.json` files from a standard folder:
+
+```bash
+python tools/generate_image_manifest.py \
+  --standard-dir /path/to/advanced-user/standards/grid-system \
+  --heuristic-only
+```
+
+For richer metadata, provide an OpenAI API key and let the script use OpenAI vision analysis against the page context and each image:
+
+```bash
+python tools/generate_image_manifest.py \
+  --standard-dir /path/to/advanced-user/standards/grid-system
+```
+
+The script writes `images/manifest.json` by default and produces entries shaped like:
+
+```json
+{
+  "filename": "cq5dam.web.1280.1280.png",
+  "title": "Standard 12×12 page layout grid",
+  "description": "Reference image showing the PwC standard 12×12 grid for page layout, including margins and gutters.",
+  "section": "Standard grid",
+  "tags": ["grid-system", "page-layout", "12x12-grid", "margins", "gutters"],
+  "usage": "primary reference"
+}
+```
 
 The BGML index can contain both:
 

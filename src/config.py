@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     upgrade_url: str = "https://advancedanalytica.co.uk/brand-governance"
     support_email: str = "jonathan@advancedanalytica.co.uk"
     asset_signing_secret: str | None = Field(default=None, validation_alias=AliasChoices("AA_ASSET_SIGNING_SECRET"))
+    openai_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("OPENAI_API_KEY", "AA_OPENAI_API_KEY"),
+    )
+    openai_model: str = Field(default="gpt-5.4-mini", validation_alias=AliasChoices("OPENAI_MODEL", "AA_OPENAI_MODEL"))
 
 
 @lru_cache

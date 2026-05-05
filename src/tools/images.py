@@ -9,7 +9,7 @@ from fastmcp.dependencies import CurrentHeaders
 from src.auth import resolve_api_key, validate_key
 from src.config import settings
 from src.errors import NotFoundError, tool_error_boundary
-from src.models.assets import ImageAssetMetadata, ImageManifest
+from src.models.assets import ImageAssetMetadata, ImageManifest, MasterImageManifest, MasterImageManifestEntry
 from src.policy.entitlements import require_collection_access
 from src.s3 import S3ObjectNotFound, get_object, list_objects, object_exists
 from src.tools.common import find_entry, load_index
@@ -38,6 +38,42 @@ async def _load_manifest(bucket_uri: str, images_path: str) -> list[ImageAssetMe
         return []
 
 
+async def _load_master_manifest_entry(
+    bucket_uri: str,
+    *,
+    content_id: str,
+    images_path: str,
+) -> tuple[MasterImageManifestEntry | None, str | None]:
+    """Find a matching entry in the nearest master image manifest above an images path."""
+    path = PurePosixPath(images_path.rstrip("/"))
+    candidates = []
+    for parent in path.parents:
+        if str(parent) in {"", "."}:
+            continue
+        candidates.append(parent / "master-image-manifest.json")
+
+    for candidate in candidates:
+        candidate_key = candidate.as_posix()
+        if not await object_exists(bucket_uri, candidate_key):
+            continue
+        try:
+            raw = await get_object(bucket_uri, candidate_key)
+            manifest = MasterImageManifest.model_validate_json(raw)
+        except (json.JSONDecodeError, S3ObjectNotFound, ValueError):
+            continue
+
+        normalized_images_path = images_path.rstrip("/")
+        for entry in manifest.entries:
+            if entry.content_id == content_id:
+                return entry, candidate_key
+            if entry.image_path and entry.image_path.rstrip("/") == normalized_images_path:
+                return entry, candidate_key
+        for entry in manifest.entries:
+            if entry.content_path and normalized_images_path.startswith(entry.content_path.rstrip("/") + "/images"):
+                return entry, candidate_key
+    return None, None
+
+
 async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
     """Return signed image URLs and manifest metadata for an indexed content entry."""
     client = await validate_key(api_key)
@@ -54,7 +90,15 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
     images_path = standard.files.images.path.rstrip("/")
     keys = await list_objects(client.bucket_uri, images_path)
     manifest = await _load_manifest(client.bucket_uri, images_path)
+    master_entry, master_manifest_path = await _load_master_manifest_entry(
+        client.bucket_uri,
+        content_id=standard.id,
+        images_path=images_path,
+    )
     manifest_by_name = {item.filename: item for item in manifest if item.filename}
+    master_manifest_by_name = {
+        item.filename: item for item in (master_entry.assets if master_entry else []) if item.filename
+    }
 
     images = []
     for key in keys:
@@ -63,13 +107,14 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
             continue
         if PurePosixPath(name).suffix.lower() not in IMAGE_EXTENSIONS:
             continue
-        item = manifest_by_name.get(name)
+        item = manifest_by_name.get(name) or master_manifest_by_name.get(name)
         image_url = build_asset_url(client.bucket_uri, key, settings.presign_expiry)
         images.append(
             {
                 "filename": name,
                 "title": item.title if item else None,
                 "description": item.description if item else "",
+                "section": item.section if item else None,
                 "usage": item.usage if item else "reference",
                 "path": key,
                 "watermark": client.watermark,
@@ -93,12 +138,16 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
             }
         )
 
+    manifest_source = "directory" if manifest else ("master" if master_entry else None)
     return {
         "ok": True,
         "clientId": client.client_id,
         "standardId": standard.id,
         "group": standard.group,
         "imagePath": images_path,
+        "manifestPath": f"{images_path}/manifest.json" if manifest else (master_entry.manifest_path if master_entry else None),
+        "masterManifestPath": master_manifest_path,
+        "manifestSource": manifest_source,
         "count": len(images),
         "images": images,
     }

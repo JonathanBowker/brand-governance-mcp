@@ -83,6 +83,25 @@ def bgml_index() -> dict:
                     "version": "2026.1",
                     "lastModified": "2026-05-05",
                 },
+                {
+                    "id": "grid-system",
+                    "category": "visual",
+                    "tier": "standards",
+                    "status": "active",
+                    "name": "Grid System",
+                    "description": "Guidance for page grids and layout structure.",
+                    "files": {
+                        "markdown": "advanced-user/standards/grid-system/page.md",
+                        "yaml": "advanced-user/standards/grid-system/page.yaml",
+                        "json": "advanced-user/standards/grid-system/page.json",
+                        "images": {"path": "advanced-user/standards/grid-system/images/", "count": 1},
+                    },
+                    "keyRules": ["Use the approved grid system for layout consistency"],
+                    "related": ["layout-principles"],
+                    "tags": ["visual", "grid", "layout"],
+                    "version": "2026.1",
+                    "lastModified": "2026-05-05",
+                },
             ],
             "collections": {
                 "standards": [],
@@ -180,6 +199,7 @@ def s3_env(monkeypatch):
                             "filename": "logo.png",
                             "title": "Primary logo example",
                             "description": "Logo example",
+                            "section": "Approved variants",
                             "usage": "primary_logo",
                             "assetType": "logo_variant",
                             "variant": "full_lockup",
@@ -197,6 +217,43 @@ def s3_env(monkeypatch):
             ).encode("utf-8"),
         )
         s3.put_object(Bucket=BRAND_BUCKET, Key="standards/colour/page.md", Body=b"# Colour\nLead with orange.")
+        s3.put_object(Bucket=BRAND_BUCKET, Key="advanced-user/standards/grid-system/page.md", Body=b"# Grid System\nUse the approved layout grid.")
+        s3.put_object(Bucket=BRAND_BUCKET, Key="advanced-user/standards/grid-system/page.yaml", Body=b"standard_id: grid-system")
+        s3.put_object(Bucket=BRAND_BUCKET, Key="advanced-user/standards/grid-system/page.json", Body=b"{\"standardId\": \"grid-system\"}")
+        s3.put_object(Bucket=BRAND_BUCKET, Key="advanced-user/standards/grid-system/images/grid.png", Body=b"fake")
+        s3.put_object(
+            Bucket=BRAND_BUCKET,
+            Key="advanced-user/master-image-manifest.json",
+            Body=json.dumps(
+                {
+                    "version": "1.0",
+                    "generatedAt": "2026-05-05T13:50:33Z",
+                    "root": "advanced-user",
+                    "directories": 1,
+                    "assets": 1,
+                    "entries": [
+                        {
+                            "contentId": "grid-system",
+                            "title": "Grid System",
+                            "contentPath": "standards/grid-system",
+                            "imagePath": "advanced-user/standards/grid-system/images",
+                            "manifestPath": "advanced-user/standards/grid-system/images/manifest.json",
+                            "count": 1,
+                            "assets": [
+                                {
+                                    "filename": "grid.png",
+                                    "title": "Standard 12x12 page layout grid",
+                                    "description": "Reference image showing the approved layout grid.",
+                                    "section": "Standard grid",
+                                    "usage": "primary reference",
+                                    "tags": ["grid-system", "page-layout", "12x12-grid"],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ).encode("utf-8"),
+        )
         s3.put_object(
             Bucket=BRAND_BUCKET,
             Key="standards/data-visualisation/page.md",

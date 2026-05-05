@@ -22,7 +22,7 @@ async def test_brand_get_index(s3_env):
 
 async def test_brand_list_standards(s3_env):
     response = await run_brand_list_standards(VALID_KEY, category="visual")
-    assert response["count"] == 3
+    assert response["count"] == 4
 
 
 async def test_brand_get_standard_markdown(s3_env):
@@ -58,6 +58,7 @@ async def test_brand_check_access(s3_env):
 async def test_brand_get_image_list(s3_env):
     response = await run_brand_get_image_list(VALID_KEY, "logo")
     assert response["count"] == 1
+    assert response["manifestSource"] == "directory"
     assert response["images"][0]["filename"] == "logo.png"
     assert "imageUrl" in response["images"][0]
     assert response["images"][0]["imageUrl"].startswith("https://advancedanalytica.co.uk/")
@@ -69,9 +70,24 @@ async def test_brand_get_image_list(s3_env):
     assert response["images"][0]["assetType"] == "logo_variant"
     assert response["images"][0]["variant"] == "full_lockup"
     assert response["images"][0]["colourway"] == "colour_positive"
+    assert response["images"][0]["section"] == "Approved variants"
     assert response["images"][0]["approvedBackgrounds"] == ["white", "light_gradient", "light_photography"]
     assert response["images"][0]["minSize"]["digitalPx"] == 48
     assert response["images"][0]["clearspaceRule"] == "Height of the lowercase c in the wordmark."
+
+
+async def test_brand_get_image_list_uses_master_manifest_when_local_manifest_missing(s3_env):
+    response = await run_brand_get_image_list(VALID_KEY, "grid-system")
+    assert response["count"] == 1
+    assert response["manifestSource"] == "master"
+    assert response["masterManifestPath"] == "advanced-user/master-image-manifest.json"
+    assert response["manifestPath"] == "advanced-user/standards/grid-system/images/manifest.json"
+    assert response["images"][0]["filename"] == "grid.png"
+    assert response["images"][0]["title"] == "Standard 12x12 page layout grid"
+    assert response["images"][0]["description"] == "Reference image showing the approved layout grid."
+    assert response["images"][0]["section"] == "Standard grid"
+    assert response["images"][0]["usage"] == "primary reference"
+    assert response["images"][0]["tags"] == ["grid-system", "page-layout", "12x12-grid"]
 
 
 async def test_brand_answer_question(s3_env):
