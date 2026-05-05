@@ -1,3 +1,5 @@
+"""Rule-summary tool for indexed standards and related collection entries."""
+
 from fastmcp import FastMCP
 from fastmcp.dependencies import CurrentHeaders
 
@@ -8,6 +10,7 @@ from src.tools.common import find_entry, load_index
 
 
 async def run_brand_get_rules(api_key: str, standard_id: str) -> dict:
+    """Return indexed key rules for a single accessible content entry."""
     client = await validate_key(api_key)
     index = await load_index(client)
     standard = find_entry(index, standard_id)
@@ -24,9 +27,10 @@ async def run_brand_get_rules(api_key: str, standard_id: str) -> dict:
 
 
 def register(mcp: FastMCP):
+    """Register the key-rules tool with the FastMCP server."""
     @mcp.tool(
         name="brand_get_rules",
-        description="Return indexed key rules for a brand standard.",
+        description="Return the key rules and related guidance references for a specific brand standard or content item.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_get_rules(

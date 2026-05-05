@@ -1,3 +1,5 @@
+"""Index retrieval tool for the client's Brand Governance Markup Language data."""
+
 from fastmcp import FastMCP
 from fastmcp.dependencies import CurrentHeaders
 
@@ -8,6 +10,7 @@ from src.tools.common import load_index
 
 
 async def run_brand_get_index(api_key: str) -> dict:
+    """Return the validated client's full BGML index payload."""
     client = await validate_key(api_key)
     require_standards(client)
     index = await load_index(client)
@@ -20,9 +23,10 @@ async def run_brand_get_index(api_key: str) -> dict:
 
 
 def register(mcp: FastMCP):
+    """Register the BGML index tool with the FastMCP server."""
     @mcp.tool(
         name="brand_get_index",
-        description="Return the full BGML index for the client's brand.",
+        description="Return the full Brand Governance Markup Language (BGML) index for the client's brand, including standards and accessible content collections.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_get_index(api_key: str = "", headers: dict[str, str] = CurrentHeaders()) -> dict:

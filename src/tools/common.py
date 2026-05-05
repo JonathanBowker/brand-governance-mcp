@@ -1,3 +1,5 @@
+"""Shared lookup, scoring, and summarization helpers for MCP tool modules."""
+
 import re
 
 from src.errors import NotFoundError

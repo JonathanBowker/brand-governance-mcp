@@ -1,3 +1,5 @@
+"""Image-listing tool for governed brand assets and manifests."""
+
 import json
 from pathlib import PurePosixPath
 
@@ -17,6 +19,7 @@ IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 
 
 async def _load_manifest(bucket_uri: str, images_path: str) -> list[ImageAssetMetadata]:
+    """Load an optional image manifest and normalize it into asset metadata entries."""
     manifest_key = f"{images_path.rstrip('/')}/manifest.json"
     if not await object_exists(bucket_uri, manifest_key):
         return []
@@ -36,6 +39,7 @@ async def _load_manifest(bucket_uri: str, images_path: str) -> list[ImageAssetMe
 
 
 async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
+    """Return signed image URLs and manifest metadata for an indexed content entry."""
     client = await validate_key(api_key)
     index = await load_index(client)
     standard = find_entry(index, standard_id)
@@ -101,9 +105,10 @@ async def run_brand_get_image_list(api_key: str, standard_id: str) -> dict:
 
 
 def register(mcp: FastMCP):
+    """Register the image-list tool with the FastMCP server."""
     @mcp.tool(
         name="brand_get_image_list",
-        description="Return available images for a standard as short-lived app-domain URLs.",
+        description="List available brand images for a guidance item, including signed URLs and any approved asset metadata.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_get_image_list(

@@ -1,3 +1,5 @@
+"""Standards listing tool for the Brand Governance MCP server."""
+
 from fastmcp import FastMCP
 from fastmcp.dependencies import CurrentHeaders
 
@@ -8,6 +10,7 @@ from src.tools.common import load_index, summarise_standard
 
 
 async def run_brand_list_standards(api_key: str, category: str = "all") -> dict:
+    """List standards visible to the client, optionally filtered by category."""
     client = await validate_key(api_key)
     require_standards(client)
     index = await load_index(client)
@@ -24,9 +27,10 @@ async def run_brand_list_standards(api_key: str, category: str = "all") -> dict:
 
 
 def register(mcp: FastMCP):
+    """Register the standards listing tool with the FastMCP server."""
     @mcp.tool(
         name="brand_list_standards",
-        description="List available standards with names, descriptions, categories and tags.",
+        description="List available brand standards with their names, summaries, categories, and tags.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_list_standards(

@@ -1,3 +1,5 @@
+"""Access-state tool for reporting key entitlements and expiry details."""
+
 from fastmcp import FastMCP
 from fastmcp.dependencies import CurrentHeaders
 
@@ -6,6 +8,7 @@ from src.errors import tool_error_boundary
 
 
 async def run_brand_check_access(api_key: str) -> dict:
+    """Return the validated client's current access tier and capability flags."""
     client = await validate_key(api_key)
     return {
         "ok": True,
@@ -21,9 +24,10 @@ async def run_brand_check_access(api_key: str) -> dict:
 
 
 def register(mcp: FastMCP):
+    """Register the access inspection tool with the FastMCP server."""
     @mcp.tool(
         name="brand_check_access",
-        description="Return current access control state for the client's key.",
+        description="Show the client's current access tier, enabled capabilities, and expiry status for this brand.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_check_access(api_key: str = "", headers: dict[str, str] = CurrentHeaders()) -> dict:

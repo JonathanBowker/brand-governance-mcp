@@ -1,8 +1,11 @@
 #!/usr/bin/env python
+"""Placeholder CLI entrypoint for the external crawler workflow."""
+
 import argparse
 
 
 def main() -> None:
+    """Print the requested crawl inputs and remind users that crawling is external."""
     parser = argparse.ArgumentParser(description="Placeholder crawler entrypoint.")
     parser.add_argument("--url", required=True)
     parser.add_argument("--output", required=True)

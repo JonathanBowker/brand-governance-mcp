@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Create a local hashed client key record for later upload to the key store."""
+
 import argparse
 import json
 from datetime import UTC, datetime, timedelta
@@ -8,6 +10,7 @@ from src.utils.hash import generate_brand_key, key_hash_value, key_hint, key_loo
 
 
 def main() -> None:
+    """Generate one raw client key and write its hashed entitlement record to disk."""
     parser = argparse.ArgumentParser(description="Create a hashed trial key file.")
     parser.add_argument("--client-id", required=True)
     parser.add_argument("--client-name", required=True)

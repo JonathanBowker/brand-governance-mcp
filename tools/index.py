@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+"""Generate a minimal BGML index from a local brand content folder."""
+
 import argparse
 import json
 from pathlib import Path
 
 
 def main() -> None:
+    """Scan a brand folder and write a simple standards-first BGML index."""
     parser = argparse.ArgumentParser(description="Generate a minimal BGML index from a brand folder.")
     parser.add_argument("--brand-dir", required=True)
     parser.add_argument("--client-id", required=True)

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Upload a local brand content tree into an S3-compatible storage bucket."""
+
 import argparse
 import mimetypes
 from pathlib import Path
@@ -9,6 +11,7 @@ from src.config import settings
 
 
 def main() -> None:
+    """Upload every file in a brand directory using the configured S3-compatible client."""
     parser = argparse.ArgumentParser(description="Upload a brand folder to an S3-compatible bucket.")
     parser.add_argument("--brand-dir", required=True)
     parser.add_argument("--bucket", required=True)

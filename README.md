@@ -4,6 +4,10 @@ Advanced Analytica Brand-First AI Governance Platform.
 
 This repository contains a Python FastMCP server that exposes brand governance content to MCP-compatible clients such as Claude, ChatGPT, and custom agents. It validates client API keys, gates access by commercial layer, reads brand data from DigitalOcean Spaces, and returns structured JSON responses for every tool.
 
+## What Is BGML?
+
+Brand Governance Markup Language (BGML) is the structured index and retrieval format this MCP uses to organize brand standards, related content collections, rules, metadata, and access-aware guidance.
+
 ## What it does
 
 - Validates API keys using SHA-256 key hashes stored in AWS S3.
@@ -277,6 +281,28 @@ Add to `~/.claude/mcp.json`:
   }
 }
 ```
+
+## MCP Inspector
+
+To inspect the live UK Brand Governance MCP endpoint with MCP Inspector, set a live brand key in your local environment or `.env`:
+
+```bash
+BRAND_GOVERNANCE_API_KEY=sk-brand-pwc-redacted
+```
+
+Then launch the local helper script from the repo root:
+
+```bash
+bash tools/inspector_uk.sh
+```
+
+The script opens MCP Inspector against:
+
+```text
+https://advancedanalytica.co.uk/mcp/brand-governance
+```
+
+and sends the key as the `X-Brand-Key` HTTP header.
 
 The server also accepts connection-level `Authorization: Bearer <key>` auth for remote MCP clients that expose an API key field instead of custom headers.
 

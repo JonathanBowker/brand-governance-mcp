@@ -1,3 +1,5 @@
+"""Collection-aware content listing and retrieval tools."""
+
 from fastmcp import FastMCP
 from fastmcp.dependencies import CurrentHeaders
 
@@ -9,6 +11,7 @@ from src.tools.common import find_entry, load_index, summarise_entry
 
 
 async def run_brand_list_content(api_key: str, group: str = "all", category: str = "all") -> dict:
+    """List accessible indexed content across one or more BGML collection groups."""
     client = await validate_key(api_key)
     index = await load_index(client)
 
@@ -45,6 +48,7 @@ async def run_brand_list_content(api_key: str, group: str = "all", category: str
 
 
 async def run_brand_get_content(api_key: str, content_id: str, format: str = "markdown") -> dict:
+    """Fetch one indexed content entry in the explicitly requested storage format."""
     client = await validate_key(api_key)
     require_format(client, format)
     index = await load_index(client)
@@ -89,9 +93,10 @@ async def run_brand_get_content(api_key: str, content_id: str, format: str = "ma
 
 
 def register(mcp: FastMCP):
+    """Register collection listing and retrieval tools with the FastMCP server."""
     @mcp.tool(
         name="brand_list_content",
-        description="List available indexed brand content across standards, toolkits, asset-library, digital, and other collections.",
+        description="List available brand guidance and resources across standards, toolkits, asset libraries, digital guidance, and other accessible collections.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_list_content(
@@ -104,7 +109,7 @@ def register(mcp: FastMCP):
 
     @mcp.tool(
         name="brand_get_content",
-        description="Fetch indexed brand content by ID from any available collection.",
+        description="Get a specific brand guidance item or resource by ID from any accessible collection.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_get_content(

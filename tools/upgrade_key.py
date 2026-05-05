@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+"""Upgrade a local key record's tier and capability flags before upload."""
+
 import argparse
 import json
 from pathlib import Path
 
 
 def main() -> None:
+    """Apply tier and capability updates to a local client key JSON file."""
     parser = argparse.ArgumentParser(description="Enable capabilities in a local key file before uploading it.")
     parser.add_argument("--key-file", required=True)
     parser.add_argument("--tier", type=int, required=True)

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
+"""Print lifecycle TTL guidance for managed client buckets."""
+
 import argparse
 
 
 def main() -> None:
+    """Describe the lifecycle action needed for the requested bucket TTL state."""
     parser = argparse.ArgumentParser(description="Print lifecycle policy guidance for a client bucket.")
     parser.add_argument("--client-id", required=True)
     parser.add_argument("--ttl", required=True, help="Days or 'none'")

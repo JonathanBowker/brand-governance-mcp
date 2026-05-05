@@ -1,3 +1,5 @@
+"""Standard retrieval tool with format resolution and JSON-sidecar preference."""
+
 from fastmcp import FastMCP
 from fastmcp.dependencies import CurrentHeaders
 
@@ -74,7 +76,7 @@ def register(mcp: FastMCP):
     """Register the standard retrieval tool with the FastMCP server."""
     @mcp.tool(
         name="brand_get_standard",
-        description="Fetch a specific brand standard by ID. Defaults to JSON sidecars for eligible standards, with Markdown available for fuller context.",
+        description="Get a specific brand standard by ID, returning the most structured version available and Markdown when fuller context is needed.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_get_standard(

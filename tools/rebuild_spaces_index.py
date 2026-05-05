@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Rebuild and upload a BGML index from content already stored in Spaces."""
+
 import argparse
 import json
 from collections import defaultdict
@@ -11,10 +13,12 @@ from src.config import settings
 
 
 def slug_to_title(slug: str) -> str:
+    """Convert a slug-like folder name into a human-readable title."""
     return slug.replace("_q_", " ").replace("-", " ").replace("_", " ").title()
 
 
 def build_client():
+    """Create the S3-compatible client used to read and write Spaces content."""
     endpoint_url = settings.s3_endpoint
     if endpoint_url and "digitaloceanspaces.com" in endpoint_url and endpoint_url.count("/") >= 2:
         endpoint_url = f"https://{settings.s3_region}.digitaloceanspaces.com"
@@ -29,6 +33,7 @@ def build_client():
 
 
 def list_keys(client, bucket: str, prefix: str) -> list[str]:
+    """List all object keys under a prefix in the target bucket."""
     keys: list[str] = []
     paginator = client.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
@@ -38,6 +43,7 @@ def list_keys(client, bucket: str, prefix: str) -> list[str]:
 
 
 def read_json(client, bucket: str, key: str) -> dict | None:
+    """Read a JSON object from storage, returning None when it is missing or unreadable."""
     try:
         response = client.get_object(Bucket=bucket, Key=key)
     except Exception:
@@ -46,6 +52,7 @@ def read_json(client, bucket: str, key: str) -> dict | None:
 
 
 def build_entry(prefix: str, folder: str, keys_set: set[str], page_json: dict | None) -> dict:
+    """Build one BGML index entry from a content folder discovered in Spaces."""
     folder_path = PurePosixPath(folder)
     relative_folder = folder.removeprefix(prefix).strip("/")
     relative_parts = PurePosixPath(relative_folder).parts
@@ -75,6 +82,7 @@ def build_entry(prefix: str, folder: str, keys_set: set[str], page_json: dict | 
 
 
 def main() -> None:
+    """Rebuild a comprehensive BGML index for a Spaces prefix and upload the result."""
     parser = argparse.ArgumentParser(description="Rebuild a comprehensive page-index.json from a Spaces prefix.")
     parser.add_argument("--bucket", required=True)
     parser.add_argument("--prefix", required=True)

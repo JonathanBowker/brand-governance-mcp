@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Remove the repeated shared advanced-user header from page Markdown files."""
+
 import argparse
 from pathlib import Path
 
@@ -6,6 +8,7 @@ from src.utils.markdown_cleanup import strip_shared_header_block
 
 
 def process_file(path: Path, write: bool) -> bool:
+    """Strip the shared header from one file and optionally write the cleaned content."""
     original = path.read_text(encoding="utf-8")
     cleaned, changed = strip_shared_header_block(original)
     if changed and write:
@@ -14,12 +17,14 @@ def process_file(path: Path, write: bool) -> bool:
 
 
 def iter_markdown_files(root: Path) -> list[Path]:
+    """Return either the target file or all nested page.md files under a directory."""
     if root.is_file():
         return [root]
     return sorted(path for path in root.rglob("page.md") if path.is_file())
 
 
 def main() -> None:
+    """Run the shared-header cleanup in dry-run or write mode."""
     parser = argparse.ArgumentParser(
         description="Remove the shared advanced-user header block from markdown files."
     )

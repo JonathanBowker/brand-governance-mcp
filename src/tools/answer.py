@@ -1,3 +1,5 @@
+"""Question-answering tool that blends BGML metadata with structured sidecars."""
+
 import json
 
 from fastmcp import FastMCP
@@ -241,7 +243,7 @@ def register(mcp: FastMCP):
     """Register the question-answering tool with the FastMCP server."""
     @mcp.tool(
         name="brand_answer_question",
-        description="Answer a brand question from BGML metadata and Markdown source content.",
+        description="Answer a brand governance question using the client's approved brand guidance, indexed standards, and structured content.",
         annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
     )
     async def brand_answer_question(

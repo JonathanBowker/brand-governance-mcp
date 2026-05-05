@@ -1,3 +1,10 @@
+"""Pydantic models for Brand Governance Markup Language (BGML) index payloads.
+
+BGML is the structured index and retrieval format this MCP uses to organize
+brand standards, related content collections, rules, metadata, and
+access-aware guidance.
+"""
+
 from typing import Any
 
 from pydantic import Field
